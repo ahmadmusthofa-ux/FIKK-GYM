@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>FIKK Fitness Center - Home</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:Inter,sans-serif}
+        
+        :root {
+            --glass: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --unesa-blue: #001f3f;
+            --unesa-lime: #b6f000;
+            --accent: #6366f1;
+        }
+
+        body{
+            min-height:100vh;
+            background: radial-gradient(circle at top left, #1e1b4b, #0f172a);
+            color:white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding: 0 15px;
+        }
+
+        .nav-container {
+            max-width: 1100px;
+            height: 70px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: #0f172a;
+            font-weight: 800;
+        }
+
+        .nav-logo img { width: 40px; height: 40px; object-fit: contain; }
+        .nav-actions { display: flex; gap: 10px; }
+
+        .nav-btn {
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 10px 18px;
+            border-radius: 12px;
+            transition: 0.3s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .nav-btn.register { color: var(--accent); border: 1.5px solid var(--accent); background: transparent; }
+        .nav-btn.login { background: var(--accent); color: white; }
+        
+        .container{
+            width: 100%;
+            max-width: 1100px;
+            margin: 20px auto;
+            padding: 0 15px;
+            flex-grow: 1;
+        }
+
+        .wrapper{
+            background: var(--glass);
+            backdrop-filter:blur(25px);
+            -webkit-backdrop-filter:blur(25px);
+            border-radius:35px;
+            padding:40px 20px;
+            border:1px solid var(--glass-border);
+            box-shadow:0 30px 60px rgba(0,0,0,0.4);
+            text-align:center;
+            margin-bottom:30px;
+        }
+        
+        .hero-logo{ width:100px; height:100px; margin:0 auto 20px; }
+        .hero-logo img{width:100%; height:100%; object-fit:contain}
+        
+        h1{
+            font-size:clamp(2.2rem, 5vw, 3.5rem);
+            font-weight:900;
+            margin-bottom:10px;
+            letter-spacing: -1.5px;
+            background: linear-gradient(to bottom, #ffffff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle{ color:#94a3b8; font-size: 0.95rem; margin-bottom: 30px; line-height: 1.6; max-width: 600px; margin-left: auto; margin-right: auto;}
+
+        .stats-top-row { display: flex; justify-content: center; gap: 15px; margin-bottom: 40px; flex-wrap: wrap; }
+
+        .counter-card{
+            background:rgba(255,255,255,0.05);
+            border-radius:22px;
+            padding:18px 24px;
+            display:inline-flex;
+            align-items:center;
+            gap:15px;
+            flex: 1;
+            min-width: 200px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .dot{width:12px;height:12px;background:#22c55e;border-radius:50%;box-shadow:0 0 15px #22c55e;animation:blink 1.2s infinite}
+        .dot.blue{background:#3b82f6; box-shadow:0 0 15px #3b82f6; animation: none;}
+        @keyframes blink{0%, 100%{opacity:1; transform:scale(1)} 50%{opacity:0.4; transform:scale(0.8)}}
+
+        .section-title {
+            text-align: left;
+            font-size: 14px;
+            font-weight: 900;
+            color: var(--unesa-lime);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title::after { content:''; height:1px; flex:1; background: rgba(182, 240, 0, 0.2); }
+
+        .price-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 15px;
+            margin-bottom: 50px;
+        }
+
+        .price-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 25px;
+            padding: 25px 20px;
+            position: relative;
+            transition: all 0.3s ease;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .price-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-5px);
+            border-color: var(--unesa-lime);
+        }
+
+        .price-card.featured {
+            border: 1.5px solid var(--unesa-lime);
+            background: rgba(182, 240, 0, 0.05);
+        }
+
+        .cat-tag {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--unesa-lime);
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            display: block;
+            text-transform: uppercase;
+        }
+
+        .price-amount {
+            font-size: 26px;
+            font-weight: 900;
+            color: white;
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-bottom: 10px;
+        }
+
+        .price-amount span { font-size: 13px; color: #64748b; font-weight: 600; }
+
+        .price-desc {
+            font-size: 11px;
+            color: #94a3b8;
+            line-height: 1.5;
+            min-height: 35px;
+        }
+
+        /* --- Analisis Section Optimization --- */
+        .stats-grid{
+            display:grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap:20px;
+        }
+        
+        .stat-card{
+            background: rgba(15, 23, 42, 0.4);
+            border-radius:28px;
+            padding:25px;
+            text-align:left;
+            border: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            min-height: 450px; /* Seragamkan tinggi */
+        }
+        
+        .stat-card h3{ 
+            margin-bottom:20px; 
+            font-size:12px; 
+            color:#cbd5e1; 
+            text-transform: uppercase; 
+            letter-spacing: 1.5px; 
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stat-card h3 svg { width: 16px; height: 16px; fill: var(--unesa-lime); }
+        
+        .chart-container {
+            position: relative;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #chart-legend {
+            margin-top: 25px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 8px 12px;
+            border-radius: 12px;
+        }
+
+        .legend-color { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+        .legend-label { font-size: 10px; color: #94a3b8; font-weight: 700; white-space: nowrap; }
+
+        .member-table-wrapper {
+            flex-grow: 1;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .member-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            transition: 0.2s;
+        }
+
+        .member-row:hover { background: rgba(255, 255, 255, 0.02); }
+        .member-row:last-child { border: none; }
+
+        .member-info { display: flex; flex-direction: column; gap: 4px; }
+        .member-name { font-size: 14px; font-weight: 700; color: #f1f5f9; }
+        .member-time { font-size: 10px; color: #64748b; font-weight: 500; }
+
+        .badge{
+            padding:5px 12px;
+            border-radius:10px;
+            font-size:10px;
+            font-weight:800;
+            background:rgba(34, 197, 94, 0.1);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        /* FOOTER */
+        .fikk-footer { width: 100%; margin-top: auto; }
+        .footer-top { background: var(--unesa-blue); color: white; padding: 12px; text-align: center; font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+        .footer-bottom { 
+            background: var(--unesa-lime); 
+            color: #000; 
+            padding: 20px 25px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            gap: 20px; 
+            font-weight: 700; 
+            font-size: 13px; 
+        }
+        .footer-left { display: flex; gap: 30px; align-items: center; }
+        .footer-info-item { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #000; }
+        .footer-info-item svg { width: 20px; height: 20px; fill: #000; }
+        .footer-address { text-align: right; line-height: 1.3; font-style: italic; font-weight: 800; text-transform: uppercase; font-size: 11px; }
+
+        @media(max-width: 768px){
+            .nav-logo span { display: none; }
+            .footer-bottom { justify-content: center; text-align: center; flex-direction: column; gap: 15px; }
+            .footer-left { flex-direction: column; gap: 10px; }
+            .footer-address { text-align: center; width: 100%; }
+            .price-container { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .stat-card { min-height: auto; }
+            #chart-legend { grid-template-columns: 1fr 1fr; }
+        }
+
+        #loader{ display:none; position:fixed; inset:0; background: #0f172a; z-index:9999; justify-content:center; align-items:center; }
+        .spinner{ width:40px; height:40px; border:3px solid rgba(255,255,255,0.05); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
+        @keyframes spin{to{transform:rotate(360deg)}}
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-container">
+        <a href="#" class="nav-logo">
+            <img src="https://i.ibb.co.com/WNQ2tjLc/dd99ebcb-3875-4e56-bfd2-4ac6a776c6e4-removebg-preview.png" alt="Logo">
+            <span>FIKK GYM UNESA</span>
+        </a>
+        <div class="nav-actions">
+            <button onclick="goPage('register.html')" class="nav-btn register">Daftar</button>
+            <button onclick="goPage('login.html')" class="nav-btn login">Login</button>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="wrapper">
+        <div class="hero-logo">
+            <img src="https://i.ibb.co.com/WNQ2tjLc/dd99ebcb-3875-4e56-bfd2-4ac6a776c6e4-removebg-preview.png" alt="Logo FIKK">
+        </div>
+        
+        <div style="color:var(--accent); letter-spacing:4px; font-size:10px; margin-bottom:8px; font-weight:900; text-transform:uppercase">University Fitness Center</div>
+        <h1>FIKK GYM</h1>
+        <p class="subtitle">Fasilitas olahraga eksklusif untuk Mahasiswa, Dosen, dan Umum di lingkungan Universitas Negeri Surabaya.</p>
+
+        <div class="stats-top-row">
+            <div class="counter-card">
+                <div class="dot blue"></div>
+                <div style="text-align:left">
+                    <div style="font-size:9px; color:#64748b; font-weight:800; text-transform:uppercase">Total Member Terdaftar</div>
+                    <div style="font-size:26px; font-weight:900"><span id="totalMembersCount">...</span></div>
+                </div>
+            </div>
+            <div class="counter-card">
+                <div class="dot"></div>
+                <div style="text-align:left">
+                    <div style="font-size:9px; color:#64748b; font-weight:800; text-transform:uppercase">Aktif Hari Ini</div>
+                    <div style="font-size:26px; font-weight:900"><span id="realtimeVisitors">...</span></div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-title">Pilihan Membership</h2>
+        <div class="price-container" id="priceList">
+            <div style="grid-column: 1/-1; padding: 40px; color: #475569;">Sinkronisasi data...</div>
+        </div>
+
+        <div class="stats-grid">
+            <!-- Analytics Card -->
+            <div class="stat-card">
+                <h3>
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+                    Kategori Member
+                </h3>
+                <div class="chart-container">
+                    <div style="width: 100%; height: 250px;">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+                <div id="chart-legend"></div>
+            </div>
+            
+            <!-- Recent Table Card -->
+            <div class="stat-card">
+                <h3>
+                    <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    Member Bergabung Baru
+                </h3>
+                <div class="member-table-wrapper" id="memberListBody">
+                    <div style="text-align:center; padding:100px 0; color:#475569; font-size: 13px;">Memuat data...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="fikk-footer">
+    <div class="footer-top">FIKK UNESA Fitness Center</div>
+    <div class="footer-bottom">
+        <div class="footer-left">
+            <a href="https://wa.me/628113345894" target="_blank" class="footer-info-item">
+                <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                08113345894
+            </a>
+            <a href="https://fikk.unesa.ac.id" target="_blank" class="footer-info-item">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                www.fikkunesa.ac.id
+            </a>
+        </div>
+        <div class="footer-address">
+            FIKK UNESA GEDUNG U1<br>KAMPUS LIDAH WETAN
+        </div>
+    </div>
+</footer>
+
+<div id="loader">
+    <div class="spinner"></div>
+</div>
+
+<script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbxoYlytOrgon7ywvLKoUY21HFr3EWssyZwHZ3ulJwJBwH1sVAy9kXIKDF_x0tbx0h0R/exec";
+    let myChart = null;
+    let initialLoad = true;
+
+    function goPage(url){
+        document.getElementById('loader').style.display='flex';
+        setTimeout(() => { window.location.href = url; }, 500);
+    }
+
+    function maskName(name) {
+        if (!name) return "****";
+        const n = name.trim();
+        const words = n.split(' ');
+        if(words.length > 1) {
+            return words[0] + " " + words[1].charAt(0) + "***";
+        }
+        return n.substring(0, 3) + "***";
+    }
+
+    async function fetchData() {
+        try {
+            const today = new Date().toISOString().substring(0, 7);
+            
+            const [resMembers, resRekap, resPricing] = await Promise.all([
+                fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'membersList' }) }),
+                fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'rekapAbsensi', bulan: today }) }),
+                fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getPricing' }) })
+            ]);
+
+            const membersData = await resMembers.json();
+            const rekapData = await resRekap.json();
+            const pricingData = await resPricing.json();
+
+            if (pricingData.status && initialLoad) renderPricing(pricingData.data);
+
+            if (membersData.status) {
+                document.getElementById('totalMembersCount').innerText = membersData.rows.length - 1; 
+                renderMembers(membersData.rows);
+                renderChart(membersData.rows);
+            }
+
+            if (rekapData.status) {
+                const todayStr = new Date().toLocaleDateString('id-ID');
+                const count = rekapData.data.filter(entry => {
+                    const entryDate = new Date(entry[0]);
+                    return !isNaN(entryDate) && entryDate.toLocaleDateString('id-ID') === todayStr;
+                }).length;
+                document.getElementById('realtimeVisitors').innerText = count;
+            }
+            
+            initialLoad = false;
+        } catch (e) {
+            console.error("Fetch error:", e);
+        }
+    }
+
+    function formatRupiah(num) {
+        if(!num) return "Rp 0";
+        return "Rp " + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    function renderPricing(pricing) {
+        const container = document.getElementById('priceList');
+        container.innerHTML = '';
+        if(!pricing || pricing.length === 0) {
+            container.innerHTML = '<div style="grid-column: 1/-1; padding: 40px; color: #94a3b8;">Data harga belum tersedia.</div>';
+            return;
+        }
+        pricing.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'price-card' + (p.category.toUpperCase().includes('FIKK') ? ' featured' : '');
+            card.innerHTML = `
+                <div>
+                    <span class="cat-tag">${p.category}</span>
+                    <div class="price-amount">${formatRupiah(p.price)} <span>/ bln</span></div>
+                    <div class="price-desc">${p.desc || 'Akses fasilitas GYM lengkap'}</div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function renderMembers(rows) {
+        const container = document.getElementById('memberListBody');
+        container.innerHTML = '';
+        // Ambil 6 data terbaru (kecuali header)
+        const recent = rows.slice(1).reverse().slice(0, 6);
+        
+        recent.forEach(row => {
+            const dateObj = new Date(row[0]);
+            const timeStr = isNaN(dateObj) ? 'Baru saja' : dateObj.toLocaleDateString('id-ID');
+            
+            const item = document.createElement('div');
+            item.className = 'member-row';
+            item.innerHTML = `
+                <div class="member-info">
+                    <span class="member-name">${maskName(row[1])}</span>
+                    <span class="member-time">Terdaftar pada ${timeStr}</span>
+                </div>
+                <span class="badge">AKTIF</span>
+            `;
+            container.appendChild(item);
+        });
+    }
+
+    function renderChart(rows) {
+        const counts = { 
+            'MHS FIKK': 0, 
+            'MHS NON-FIKK': 0, 
+            'DOSEN/TENDIK': 0, 
+            'UMUM': 0 
+        };
+
+        rows.slice(1).forEach(row => {
+            const kat = (row[5] || '').toUpperCase();
+            if (kat.includes('FIKK') && !kat.includes('NON')) {
+                counts['MHS FIKK']++;
+            } else if (kat.includes('NON')) {
+                counts['MHS NON-FIKK']++;
+            } else if (kat.includes('DOSEN') || kat.includes('PEGAWAI') || kat.includes('TENDIK')) {
+                counts['DOSEN/TENDIK']++;
+            } else {
+                counts['UMUM']++;
+            }
+        });
+
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+        const colors = ['#b6f000', '#6366f1', '#38bdf8', '#fb7185'];
+        
+        if (myChart) myChart.destroy();
+
+        myChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(counts),
+                datasets: [{
+                    data: Object.values(counts),
+                    backgroundColor: colors,
+                    borderWidth: 0,
+                    hoverOffset: 20
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '80%',
+                plugins: { legend: { display: false } },
+                animation: { duration: initialLoad ? 1000 : 0 } // Animasi hanya saat pertama kali
+            }
+        });
+
+        // Legend Rendering
+        const legendDiv = document.getElementById('chart-legend');
+        legendDiv.innerHTML = '';
+        Object.entries(counts).forEach(([label, value], i) => {
+            legendDiv.innerHTML += `
+                <div class="legend-item">
+                    <div class="legend-color" style="background:${colors[i]}"></div>
+                    <div class="legend-label">${label} <span style="color:white; margin-left:4px">${value}</span></div>
+                </div>
+            `;
+        });
+    }
+
+    // Auto update data every 30 seconds without refresh
+    setInterval(fetchData, 30000);
+
+    window.onload = fetchData;
+</script>
+
+</body>
+</html>
