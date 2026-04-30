@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Admin Dashboard - FIKK Gym</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:Inter,sans-serif}
+        body{padding:20px;background:linear-gradient(135deg,#0f172a,#312e81,#4f46e5);color:#fff;min-height:100vh}
+        
+        .topbar{display:flex;justify-content:space-between;align-items:center;padding:20px 30px;border-radius:25px;background:rgba(255,255,255,.08);backdrop-filter:blur(18px);margin-bottom:25px}
+        .topbar h2 {
+            background: linear-gradient(to bottom, #ffffff, #cbd5e1);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .topbar button{padding:12px 20px;border:none;border-radius:14px;font-weight:700;cursor:pointer;background:#ef4444;color:#fff; transition: opacity 0.3s}
+        .topbar button:hover { opacity: 0.8; }
+
+        .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;margin-bottom:25px}
+        .stat{background:rgba(255,255,255,.08);padding:25px;border-radius:24px;border:1px solid rgba(255,255,255,.1);cursor:pointer;transition:all 0.3s ease}
+        .stat:hover{background:rgba(255,255,255,.15);transform:translateY(-5px)}
+        .stat div { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; font-weight: 700; }
+        .stat h2{margin-top:10px;font-size:34px}
+
+        .tabs{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+        .tabs button{padding:14px 18px;border:none;border-radius:14px;font-weight:700;cursor:pointer;background:rgba(255,255,255,.08);color:#fff; transition: background 0.3s}
+        .active-tab{background:#4f46e5!important}
+
+        .panel{display:none;background:rgba(255,255,255,.08);padding:30px;border-radius:28px;margin-bottom:20px; border: 1px solid rgba(255,255,255,0.05);}
+        .panel.active{display:block}
+        
+        /* Pricing Table Styles */
+        .price-table-input { 
+            width: 100%; 
+            padding: 10px; 
+            border-radius: 8px; 
+            border: 1px solid #ddd; 
+            background: #fff; 
+            color: #333; 
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .price-table-textarea { 
+            width: 100%; 
+            padding: 10px; 
+            border-radius: 8px; 
+            border: 1px solid #ddd; 
+            background: #fff; 
+            color: #333; 
+            font-size: 13px;
+            height: 60px;
+            resize: vertical;
+        }
+        .save-row-btn { 
+            padding: 10px 15px; 
+            border-radius: 10px; 
+            border: none; 
+            background: #22c55e; 
+            color: #fff; 
+            font-weight: 700; 
+            cursor: pointer; 
+            transition: 0.3s;
+            white-space: nowrap;
+        }
+        .save-row-btn:hover { background: #16a34a; transform: scale(1.05); }
+
+        #reader{max-width:500px;margin:20px auto; border-radius: 20px; overflow: hidden; background: #000 !important; border: none !important;}
+        .search-box{width:100%;padding:15px;border:none;border-radius:12px;margin-bottom:15px; background: rgba(255,255,255,0.9); color: #000; font-weight: 600;}
+        
+        .table-wrap { overflow-x: auto; border-radius: 15px; margin-top: 15px; }
+        table{width:100%;border-collapse:collapse;background:#fff;color:#111827; overflow:hidden}
+        th,td{padding:15px;border-bottom:1px solid #eee;text-align:left}
+        th{background:#f3f4f6; font-size: 12px; text-transform: uppercase; color: #64748b;}
+        
+        .action-btn{padding:10px 15px;border:none;border-radius:10px;background:#22c55e;color:#fff;font-weight:700;cursor:pointer}
+        
+        .badge-expired{background:#ef4444;color:#fff;padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700}
+        .badge-active{background:#22c55e;color:#fff;padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700}
+        .badge-pending{background:#f59e0b;color:#fff;padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700}
+
+        #scanModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99999;align-items:center;justify-content:center; backdrop-filter: blur(5px);}
+        .modal-box{background:#fff;color:#111827;width:380px;max-width:92%;padding:34px;border-radius:28px;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,.35);animation:pop .35s cubic-bezier(0.175, 0.885, 0.32, 1.275)}
+        @keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+        .modal-icon{font-size:60px;margin-bottom:14px}
+        .modal-title{font-size:26px;font-weight:800;margin-bottom:14px}
+        .modal-text{line-height:1.6;font-size:16px;margin-bottom:22px; color: #4b5563;}
+        .modal-ok{background:#4f46e5;color:#fff;border:none;padding:14px 40px;border-radius:14px;font-weight:800;cursor:pointer; width: 100%;}
+    </style>
+</head>
+<body>
+
+<audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+
+<div id="scanModal">
+    <div class="modal-box">
+        <div class="modal-icon" id="modalIcon">✅</div>
+        <div class="modal-title" id="modalTitle">Info</div>
+        <div class="modal-text" id="modalText"></div>
+        <button class="modal-ok" onclick="closeModal()">OKE</button>
+    </div>
+</div>
+
+<div class="topbar">
+    <h2>🛡 Admin FIKK Gym</h2>
+    <button onclick="logout()">Logout</button>
+</div>
+
+<div class="stats">
+    <div class="stat" onclick="filterByStatus('all')"><div>Total Member</div><h2 id="total">0</h2></div>
+    <div class="stat" onclick="filterByStatus('Aktif')"><div>Aktif</div><h2 id="aktif">0</h2></div>
+    <div class="stat" onclick="filterByStatus('Pending')"><div>Pending</div><h2 id="pending">0</h2></div>
+    <div class="stat" onclick="filterByStatus('Expired')"><div>Expired</div><h2 id="expired">0</h2></div>
+</div>
+
+<div class="tabs">
+    <button id="btn-scan" onclick="showTab('scan')">QR Scan</button>
+    <button id="btn-approval" onclick="showTab('approval')">Approval</button>
+    <button id="btn-membersTab" onclick="showTab('membersTab')">Daftar Member</button>
+    <button id="btn-rekap" onclick="showTab('rekap')">Rekap Absensi</button>
+    <button id="btn-pricing" onclick="showTab('pricing')">💰 Price List</button>
+</div>
+
+<div id="scan" class="panel active">
+    <h3 style="text-align:center; margin-bottom: 15px;">Scan Presensi Member</h3>
+    <div id="reader"></div>
+    <p style="text-align:center; font-size:12px; color:#94a3b8; margin-top:15px;">Gunakan kamera belakang untuk hasil scan terbaik.</p>
+</div>
+
+<div id="approval" class="panel">
+    <h3>Approval Membership</h3>
+    <div class="table-wrap" id="membersApprovalList"></div>
+</div>
+
+<div id="membersTab" class="panel">
+    <h3 id="memberListTitle">Daftar Seluruh Member</h3>
+    <input id="searchInput" class="search-box" placeholder="Cari nama atau ID..." onkeyup="searchMember()">
+    <div class="table-wrap" id="memberTableWrapper"></div>
+</div>
+
+<div id="rekap" class="panel">
+    <h3>Rekap Absensi Bulanan</h3>
+    <div style="display:flex;gap:10px;margin-top:15px;flex-wrap:wrap">
+        <input type="month" id="bulan" style="padding:10px; border-radius:10px; border:none;">
+        <button class="action-btn" onclick="loadRekap()">Tampilkan</button>
+        <button class="action-btn" style="background:#3b82f6" onclick="exportExcel()">CSV</button>
+    </div>
+    <div class="table-wrap" id="rekapTable" style="margin-top:20px;"></div>
+</div>
+
+<!-- PANEL MANAJEMEN HARGA (VERSI TABEL) -->
+<div id="pricing" class="panel">
+    <h3>Manajemen Price List (Home)</h3>
+    <p style="font-size: 13px; color: #94a3b8; margin-bottom: 10px;">Perubahan di sini akan langsung merubah tampilan harga di halaman pendaftaran member.</p>
+    
+    <div class="table-wrap">
+        <table id="pricingTable">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Nama Kategori</th>
+                    <th style="width: 20%;">Harga</th>
+                    <th style="width: 40%;">Deskripsi Singkat</th>
+                    <th style="width: 15%; text-align: center;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="pricingTableBody">
+                <tr>
+                    <td colspan="4" style="text-align:center; padding: 30px;">Memuat data harga...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+const API_URL="https://script.google.com/macros/s/AKfycbxoYlytOrgon7ywvLKoUY21HFr3EWssyZwHZ3ulJwJBwH1sVAy9kXIKDF_x0tbx0h0R/exec";
+let scanner;
+let scanLock=false;
+let allMembers=[];
+let barcodeBuffer = "";
+
+function startAutoUpdate() {
+    setInterval(() => {
+        loadStats();
+        if (document.getElementById('approval').classList.contains('active')) {
+            loadApprovalList();
+        }
+    }, 30000);
+}
+
+document.addEventListener("keydown", function(e) {
+    if (document.activeElement.id === 'searchInput') return;
+    if (e.key === "Enter") {
+        if (barcodeBuffer.length > 0) {
+            onScanSuccess(barcodeBuffer.trim());
+            barcodeBuffer = "";
+        }
+    } else {
+        if (e.key.length === 1) {
+            barcodeBuffer += e.key;
+        }
+    }
+});
+
+function showModal(icon,title,html){
+    document.getElementById('modalIcon').innerHTML=icon;
+    document.getElementById('modalTitle').innerHTML=title;
+    document.getElementById('modalText').innerHTML=html;
+    document.getElementById('scanModal').style.display='flex';
+}
+function closeModal(){ document.getElementById('scanModal').style.display='none'; }
+function logout(){ location='index.html' }
+
+function showTab(id){
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active-tab'));
+    document.getElementById(id).classList.add('active');
+    document.getElementById('btn-'+id).classList.add('active-tab');
+    
+    if(id==='approval') loadApprovalList();
+    if(id==='membersTab') {
+        document.getElementById('memberListTitle').innerText = "Daftar Seluruh Member";
+        loadAllMembers();
+    }
+    if(id==='pricing') loadPricingData();
+}
+
+async function filterByStatus(status) {
+    showTab('membersTab');
+    document.getElementById('memberListTitle').innerText = status === 'all' ? "Daftar Seluruh Member" : "Member Status: " + status;
+    if (allMembers.length === 0) await loadAllMembers();
+    if (status === 'all') {
+        renderMemberTable(allMembers);
+    } else {
+        const filtered = allMembers.filter(m => m[7] === status);
+        renderMemberTable(filtered);
+    }
+}
+
+function onScanSuccess(decodedText){
+    if(scanLock)return;
+    scanLock=true;
+    document.getElementById('beepSound').play();
+    
+    fetch(API_URL,{
+        method:'POST',
+        body:JSON.stringify({action:'presensi',memberId:decodedText})
+    })
+    .then(r=>r.json())
+    .then(d=>{
+        if(d.status){
+            showModal('✅','Check-In Berhasil','👤 Nama : <b>'+(d.nama||'-')+'</b><br><br>🆔 Member : <b>'+decodedText+'</b><br><br>🟢 Status : <b>Aktif</b>');
+        }else{
+            showModal('⚠️','Check-In Ditolak','👤 Nama : <b>'+(d.nama||'-')+'</b><br><br>🆔 Member : <b>'+decodedText+'</b><br><br>🔴 Status : <b>'+d.message+'</b>');
+        }
+        loadStats();
+        setTimeout(()=>scanLock=false,3000);
+    }).catch(err => {
+        scanLock=false;
+    });
+}
+
+scanner = new Html5QrcodeScanner('reader', { 
+    fps: 10, 
+    qrbox: 250,
+    rememberLastUsedCamera: true,
+    showFlipCameraButton: true,
+    videoConstraints: { facingMode: "environment" }
+});
+scanner.render(onScanSuccess);
+
+async function loadStats(){
+    try {
+        let r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'dashboardStats'})});
+        let j=await r.json();
+        document.getElementById('total').innerHTML=j.total||0;
+        document.getElementById('aktif').innerHTML=j.aktif||0;
+        document.getElementById('pending').innerHTML=j.pending||0;
+        document.getElementById('expired').innerHTML=j.expired||0;
+    } catch(e) {}
+}
+
+async function loadApprovalList(){
+    let r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'membersList'})});
+    let j=await r.json();
+    let h='<table><thead><tr><th>Nama</th><th>Aksi</th></tr></thead><tbody>';
+    let count = 0;
+    for(let i=1;i<j.rows.length;i++){
+        if(j.rows[i][7]=='Pending'){
+            count++;
+            h+=`<tr><td>${j.rows[i][1]}</td><td><button class='action-btn' onclick="approve('${j.rows[i][0]}')">Approve</button></td></tr>`;
+        }
+    }
+    document.getElementById('membersApprovalList').innerHTML= count > 0 ? h+'</tbody></table>' : '<p style="text-align:center;padding:20px">Tidak ada antrean approval.</p>';
+}
+
+async function approve(id){
+    let d=prompt('Durasi Aktif (Hari)',30);
+    if(!d)return;
+    await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'approveMember',memberId:id,durasiHari:d})});
+    showModal('🎉','Membership Disetujui','Member berhasil diaktifkan');
+    loadApprovalList();
+    loadStats();
+}
+
+async function loadAllMembers(){
+    document.getElementById('memberTableWrapper').innerHTML = "<p style='padding:20px'>Memuat data member...</p>";
+    let r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'membersList'})});
+    let j=await r.json();
+    allMembers=j.rows.slice(1);
+    renderMemberTable(allMembers);
+}
+
+function renderMemberTable(data){
+    if(data.length === 0) {
+        document.getElementById('memberTableWrapper').innerHTML = "<p style='padding:20px;text-align:center;color:#fff'>Data tidak ditemukan.</p>";
+        return;
+    }
+    let h='<table><thead><tr><th>Nama Member</th><th>ID</th><th>Status</th><th>Expired</th></tr></thead><tbody>';
+    data.forEach(x=>{
+        let exp='-';
+        if(x[8]){
+            let d=new Date(x[8]);
+            exp=!isNaN(d)?d.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}):x[8];
+        }
+        let bClass = 'badge-active';
+        if(x[7] === 'Expired') bClass = 'badge-expired';
+        if(x[7] === 'Pending') bClass = 'badge-pending';
+        
+        let badge=`<span class="${bClass}">${x[7]}</span>`;
+        h+=`<tr><td><b>${x[1]}</b></td><td>${x[0]}</td><td>${badge}</td><td>${exp}</td></tr>`;
+    });
+    document.getElementById('memberTableWrapper').innerHTML=h+'</tbody></table>';
+}
+
+function searchMember(){
+    let v=document.getElementById('searchInput').value.toLowerCase();
+    renderMemberTable(allMembers.filter(r=>r[1].toLowerCase().includes(v)||r[0].toLowerCase().includes(v)));
+}
+
+async function loadPricingData() {
+    try {
+        const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getPricing' }) });
+        const j = await r.json();
+        const tbody = document.getElementById('pricingTableBody');
+        tbody.innerHTML = '';
+        
+        if (j.data && j.data.length > 0) {
+            j.data.forEach((item, index) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>
+                            <input type="text" class="price-table-input" id="cat-${index}" value="${item.category}">
+                        </td>
+                        <td>
+                            <input type="text" class="price-table-input" id="pri-${index}" value="${item.price}">
+                        </td>
+                        <td>
+                            <textarea class="price-table-textarea" id="desc-${index}">${item.desc}</textarea>
+                        </td>
+                        <td style="text-align: center;">
+                            <button class="save-row-btn" onclick="savePrice(${index})">Update</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        } else {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Belum ada data di sheet "Settings"</td></tr>';
+        }
+    } catch (e) {
+        document.getElementById('pricingTableBody').innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Gagal memuat data harga.</td></tr>';
+    }
+}
+
+async function savePrice(index) {
+    const category = document.getElementById(`cat-${index}`).value;
+    const price = document.getElementById(`pri-${index}`).value;
+    const desc = document.getElementById(`desc-${index}`).value;
+
+    showModal('⏳', 'Menyimpan...', 'Harap tunggu sebentar...');
+    
+    try {
+        const r = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'updatePricing',
+                index: index,
+                category: category,
+                price: price,
+                desc: desc
+            })
+        });
+        const j = await r.json();
+        if(j.status) {
+            showModal('✅', 'Berhasil', 'Data kategori <b>'+category+'</b> telah diperbarui!');
+        } else {
+            showModal('❌', 'Gagal', 'Terjadi kesalahan saat menyimpan.');
+        }
+    } catch(e) {
+        showModal('❌', 'Error', 'Tidak dapat terhubung ke server.');
+    }
+}
+
+async function loadRekap(){
+    let bulanVal = document.getElementById('bulan').value;
+    if(!bulanVal) return alert("Pilih bulan terlebih dahulu");
+    document.getElementById('rekapTable').innerHTML = "Memuat rekap absensi...";
+    let r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'rekapAbsensi',bulan:bulanVal})});
+    let j=await r.json();
+    if(!j.data||!j.data.length){document.getElementById('rekapTable').innerHTML='<p style="padding:20px">Tidak ada data kunjungan pada bulan ini.</p>';return;}
+    
+    let hadir={};
+    let h='<table><thead><tr><th>Nama (ID)</th><th>Tanggal</th><th>Waktu</th></tr></thead><tbody>';
+    j.data.forEach(x=>{
+        let tanggal='-';
+        let d=new Date(x[0]);
+        if(!isNaN(d)) tanggal=d.toLocaleDateString('id-ID');
+        let jamRaw = x[3]||'-';
+        let jamTampil = jamRaw;
+        if (typeof jamRaw === 'string' && jamRaw.includes('T')) {
+            jamTampil = jamRaw.split('T')[1].split('.')[0];
+        } else if (jamRaw !== '-') {
+            let dj = new Date(jamRaw);
+            if(!isNaN(dj.getTime())){
+                jamTampil = dj.getHours().toString().padStart(2, '0') + ':' + 
+                            dj.getMinutes().toString().padStart(2, '0') + ':' + 
+                            dj.getSeconds().toString().padStart(2, '0');
+            }
+        }
+        let nama=x[2]||'Tanpa Nama';
+        hadir[nama]=(hadir[nama]||0)+1;
+        h+=`<tr><td>${nama} (${x[1]})</td><td>${tanggal}</td><td>${jamTampil}</td></tr>`;
+    });
+    h+='</tbody></table><br><h3 style="margin-bottom:10px">Total Kehadiran</h3><table><thead><tr><th>Nama Member</th><th>Frekuensi</th></tr></thead><tbody>';
+    for(let n in hadir){h+=`<tr><td>${n}</td><td><b>${hadir[n]} kali</b></td></tr>`}
+    document.getElementById('rekapTable').innerHTML=h+'</tbody></table>';
+}
+
+function exportExcel(){
+    let csv=[];
+    const rows = document.querySelectorAll('#rekapTable tr');
+    if(rows.length === 0) return alert("Tampilkan data rekap terlebih dahulu.");
+    rows.forEach(r=>{ csv.push([...r.children].map(td=>td.innerText).join(',')); });
+    let a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([csv.join('\n')],{type:'text/csv'}));
+    a.download='rekap_absensi_fikk.csv';
+    a.click();
+}
+
+loadStats();
+startAutoUpdate();
+document.getElementById('btn-scan').classList.add('active-tab');
+</script>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Dashboard Member - FIKK Gym</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:Inter,sans-serif}
+        body{min-height:100vh;padding:20px;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#0f172a,#312e81,#4f46e5)}
+        .card{width:100%;max-width:620px;background:rgba(255,255,255,.08);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.15);border-radius:34px;padding:35px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+        .logo{width:80px;height:80px;margin:auto;background:#fff;border-radius:22px;display:flex;justify-content:center;align-items:center;margin-bottom:20px}
+        .logo img{width:60px;height:60px;object-fit:contain}
+        .greeting-box{text-align:center;margin-bottom:25px}
+        .greeting-text{color:#bfdbfe;font-size:16px;font-weight:600;margin-bottom:5px}
+        .member-name{color:#fff;font-size:28px;font-weight:800}
+        .brand{text-align:center;color:#bfdbfe;letter-spacing:2px;font-size:12px;margin-bottom:5px;font-weight:700}
+        .member-box{background:rgba(255,255,255,.10);border-radius:24px;padding:22px;margin-bottom:30px}
+        .table{width:100%;border-collapse:collapse}
+        .table th{text-align:left;padding:14px 8px;color:#dbeafe;width:40%;font-weight:600;border-bottom:1px solid rgba(255,255,255,.08)}
+        .table td{padding:14px 8px;color:white;border-bottom:1px solid rgba(255,255,255,.08); transition: all 0.3s ease;}
+        .badge{padding:8px 14px;border-radius:30px;font-weight:700;background:#22c55e;color:#fff;display:inline-block; transition: background 0.3s ease;}
+        .badge-expired{background:#ef4444!important}
+        .badge-pending{background:#f59e0b!important}
+        .center{text-align:center;background:white;padding:30px;border-radius:28px;margin-bottom:25px}
+        .center h3{margin-bottom:18px;color:#111827}
+        #qrcode{display:flex;justify-content:center;margin:20px 0}
+        .center p{color:#475569;line-height:1.7;font-size:14px}
+        .menu{margin-bottom:20px}
+        .menu-btn{display:block;text-decoration:none;padding:16px;text-align:center;border-radius:18px;background:#fff;font-weight:700;color:#111827;transition:.3s;cursor:pointer;border:none;width:100%;font-size:16px}
+        .menu-btn:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(0,0,0,0.1)}
+        .logout{width:100%;padding:16px;border:none;border-radius:18px;background:transparent;border:1px solid rgba(255,255,255,.35);color:white;font-weight:700;cursor:pointer}
+        .footer{margin-top:20px;text-align:center;font-size:12px;color:#94a3b8}
+
+        /* Auto-update indicator */
+        .sync-indicator { font-size: 10px; color: rgba(255,255,255,0.3); text-align: center; margin-top: 10px; font-style: italic; }
+
+        /* Loading Overlay Style */
+        #loadingOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-top: 5px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @media(max-width:600px){
+            .card{padding:24px}
+            .member-name{font-size:22px}
+        }
+    </style>
+</head>
+<body>
+
+<div id="loadingOverlay">
+    <div class="spinner"></div>
+    <p>Mohon Tunggu...</p>
+</div>
+
+<div class="card">
+    <div class="logo">
+        <img src="https://i.ibb.co.com/WNQ2tjLc/dd99ebcb-3875-4e56-bfd2-4ac6a776c6e4-removebg-preview.png" alt="Logo">
+    </div>
+    <div class="brand">FIKK UNESA GYM</div>
+    
+    <div class="greeting-box">
+        <div id="greetingTime" class="greeting-text">Selamat Datang,</div>
+        <div id="greetingName" class="member-name">Memuat Nama...</div>
+    </div>
+
+    <div class="member-box">
+        <table class="table">
+            <tr><th>ID Member</th><td id="memberId">-</td></tr>
+            <tr><th>NIM/NIP</th><td id="nimnip">-</td></tr>
+            <tr><th>Kategori</th><td id="kategori">-</td></tr>
+            <tr><th>Status</th><td><span id="status" class="badge">Memproses...</span></td></tr>
+            <tr><th>Berlaku s/d</th><td id="expired">-</td></tr>
+        </table>
+    </div>
+
+    <div class="center">
+        <h3>QR Check-In</h3>
+        <div id="qrcode"></div>
+        <p>Tunjukkan QR ini ke admin untuk scan presensi kedatangan.</p>
+    </div>
+
+    <div class="menu">
+        <button class="menu-btn" onclick="goToPayment()">Pembayaran / Perpanjang</button>
+    </div>
+
+    <button class="logout" onclick="manualLogout()">Logout</button>
+
+    <div class="sync-indicator" id="lastUpdate">Sinkronisasi otomatis aktif</div>
+    
+    <div class="footer">
+        FIKK GYM
+    </div>
+</div>
+
+<script>
+    const API_URL="https://script.google.com/macros/s/AKfycbxoYlytOrgon7ywvLKoUY21HFr3EWssyZwHZ3ulJwJBwH1sVAy9kXIKDF_x0tbx0h0R/exec";
+    let currentMemberIdForQR = "";
+
+    function setGreeting() {
+        const hour = new Date().getHours();
+        let greeting = "Selamat Malam,";
+        if (hour >= 5 && hour < 11) greeting = "Selamat Pagi,";
+        else if (hour >= 11 && hour < 15) greeting = "Selamat Siang,";
+        else if (hour >= 15 && hour < 18) greeting = "Selamat Sore,";
+        document.getElementById('greetingTime').innerText = greeting;
+    }
+
+    async function loadData(){
+        const mid = localStorage.getItem('memberId');
+        if(!mid) return;
+
+        try {
+            let r = await fetch(API_URL, {
+                method:'POST',
+                body:JSON.stringify({ action:'memberData', memberId: mid })
+            });
+
+            if (!r.ok) return;
+            let j = await r.json();
+
+            if (!j || j.error) return;
+
+            // 1. Ambil data dasar
+            updateElementIfChanged('greetingName', j.nama || j.Nama || 'Member');
+            updateElementIfChanged('memberId', j.memberId || j.MemberID || '-');
+            
+            let valNimNip = j.nimnip || j.nim || j.nip || j.NIM || j.NIP || j.NIMNIP || '-';
+            updateElementIfChanged('nimnip', valNimNip);
+            updateElementIfChanged('kategori', j.kategori || j.Kategori || '-');
+            
+            // 2. Logika Validasi Tanggal Expired (Mencegah status Aktif jika tanggal sudah lewat)
+            let statusText = j.statusMember || j.Status || '-';
+            let rawExpired = j.expired || j.Expired;
+            let formattedExpired = '-';
+            
+            if (rawExpired && rawExpired !== '-') {
+                const dateExpired = new Date(rawExpired);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0); // Reset jam ke 00:00 untuk perbandingan tanggal saja
+
+                // Cek jika tanggal sudah lewat dari hari ini
+                if (!isNaN(dateExpired) && dateExpired < today) {
+                    statusText = 'Expired';
+                }
+
+                formattedExpired = !isNaN(dateExpired) ? dateExpired.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : rawExpired;
+            }
+            
+            updateElementIfChanged('expired', formattedExpired);
+
+            // 3. Update Status Badge
+            const statusBadge = document.getElementById('status');
+            if(statusBadge.innerText !== statusText) {
+                statusBadge.innerText = statusText;
+                statusBadge.className = "badge"; 
+                if(statusText === 'Expired') {
+                    statusBadge.classList.add('badge-expired');
+                } else if(statusText === 'Pending') {
+                    statusBadge.classList.add('badge-pending');
+                }
+            }
+
+            // 4. Update QR Code hanya jika ID berubah
+            let newId = j.memberId || j.MemberID;
+            if(newId && newId !== currentMemberIdForQR) {
+                const qrContainer = document.getElementById('qrcode');
+                qrContainer.innerHTML = ''; 
+                new QRCode(qrContainer, {
+                    text: newId,
+                    width: 180,
+                    height: 180,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+                currentMemberIdForQR = newId;
+            }
+
+            // Update timestamp sinkronisasi
+            document.getElementById('lastUpdate').innerText = "Data diperbarui: " + new Date().toLocaleTimeString('id-ID');
+
+        } catch (error) {
+            console.error("Auto-sync failed:", error);
+        }
+    }
+
+    function updateElementIfChanged(id, newValue) {
+        const el = document.getElementById(id);
+        if(el && el.innerHTML !== newValue) {
+            el.innerHTML = newValue;
+        }
+    }
+
+    function goToPayment() {
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        setTimeout(() => { window.location.href = 'payment.html'; }, 500);
+    }
+
+    function manualLogout(){
+        localStorage.clear();
+        window.location.href = 'login.html';
+    }
+
+    setGreeting();
+    loadData();
+
+    // Sinkronisasi otomatis setiap 30 detik
+    setInterval(loadData, 30000);
+</script>
+
+</body>
+</html>

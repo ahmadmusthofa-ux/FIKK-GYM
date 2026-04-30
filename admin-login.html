@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width,initial-scale=1.0">
+
+<title>Admin Login</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Inter,sans-serif;
+}
+
+body{
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+padding:20px;
+background:
+linear-gradient(
+135deg,
+#020617,
+#1e1b4b,
+#312e81
+);
+}
+
+.card{
+width:100%;
+max-width:470px;
+background:rgba(255,255,255,.08);
+backdrop-filter:blur(18px);
+border:1px solid rgba(255,255,255,.12);
+border-radius:34px;
+padding:42px;
+box-shadow:0 20px 60px rgba(0,0,0,.35);
+}
+
+.logo{
+width:90px;
+height:90px;
+margin:auto;
+margin-bottom:22px;
+background:#fff;
+border-radius:28px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:42px;
+}
+
+.badge{
+text-align:center;
+color:#93c5fd;
+font-size:13px;
+letter-spacing:3px;
+margin-bottom:8px;
+}
+
+h2{
+text-align:center;
+font-size:34px;
+color:white;
+margin-bottom:10px;
+}
+
+.subtitle{
+text-align:center;
+color:#dbeafe;
+line-height:1.7;
+margin-bottom:30px;
+}
+
+label{
+display:block;
+margin-top:16px;
+margin-bottom:8px;
+color:#dbeafe;
+font-weight:600;
+}
+
+input{
+width:100%;
+padding:16px;
+border:none;
+outline:none;
+border-radius:16px;
+font-size:15px;
+}
+
+.password-wrap{
+position:relative;
+}
+
+.eye{
+position:absolute;
+right:16px;
+top:50%;
+transform:translateY(-50%);
+cursor:pointer;
+font-size:20px;
+}
+
+button{
+width:100%;
+margin-top:28px;
+padding:16px;
+border:none;
+border-radius:18px;
+background:white;
+color:#111827;
+font-weight:800;
+font-size:16px;
+cursor:pointer;
+transition:.3s;
+}
+
+button:hover{
+transform:translateY(-2px);
+}
+
+#loading{
+display:none;
+margin-top:18px;
+text-align:center;
+color:white;
+font-weight:600;
+}
+
+.back{
+display:block;
+text-align:center;
+margin-top:24px;
+text-decoration:none;
+color:#c7d2fe;
+}
+
+.footer{
+text-align:center;
+margin-top:18px;
+font-size:13px;
+color:#94a3b8;
+}
+
+</style>
+</head>
+<body>
+
+<div class="card">
+
+<div class="logo">
+🛡️
+</div>
+
+<div class="badge">
+RESTRICTED ACCESS
+</div>
+
+<h2>Admin Portal</h2>
+
+<p class="subtitle">
+Login dashboard admin untuk approval membership,
+scan presensi QR, dan statistik gym.
+</p>
+
+<label>Username</label>
+<input
+id="user"
+placeholder="Admin username">
+
+
+<label>Password</label>
+
+<div class="password-wrap">
+
+<input
+id="pass"
+type="password"
+placeholder="Admin password">
+
+<span
+class="eye"
+onclick="togglePass()">
+👁
+</span>
+
+</div>
+
+
+<button onclick="adminLogin()">
+Masuk Dashboard
+</button>
+
+<div id="loading">
+Memverifikasi admin...
+</div>
+
+<a
+href="index.html"
+class="back">
+← Kembali
+</a>
+
+<div class="footer">
+FIKK Gym Admin Console
+</div>
+
+</div>
+
+
+<script>
+
+const API_URL="https://script.google.com/macros/s/AKfycbxoYlytOrgon7ywvLKoUY21HFr3EWssyZwHZ3ulJwJBwH1sVAy9kXIKDF_x0tbx0h0R/exec";
+
+
+function togglePass(){
+
+let p=
+document.getElementById(
+'pass'
+);
+
+p.type=
+p.type==='password'
+?'text'
+:'password';
+
+}
+
+
+
+async function adminLogin(){
+
+if(
+!user.value ||
+!pass.value
+){
+alert(
+'Isi username dan password'
+);
+return;
+}
+
+document.getElementById(
+'loading'
+).style.display='block';
+
+
+let r=await fetch(
+API_URL,
+{
+method:'POST',
+body:JSON.stringify({
+action:'adminLogin',
+username:user.value,
+password:pass.value
+})
+}
+);
+
+
+let j=await r.json();
+
+
+document.getElementById(
+'loading'
+).style.display='none';
+
+
+if(j.status){
+
+location=
+'admin-dashboard.html';
+
+}else{
+
+alert(
+'Login admin gagal'
+);
+
+}
+
+}
+
+</script>
+
+</body>
+</html>

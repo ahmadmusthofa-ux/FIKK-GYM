@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>Pembayaran Membership - FIKK GYM UNESA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px; /* Padding luar lebih kecil untuk mobile */
+            background: linear-gradient(135deg, #0f172a, #1e1b4b, #312e81);
+        }
+
+        .card {
+            width: 100%;
+            max-width: 480px;
+            background: rgba(255, 255, 255, .08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, .15);
+            border-radius: 28px; /* Radius lebih proporsional */
+            padding: 25px; /* Padding dalam lebih pas untuk mobile */
+            box-shadow: 0 25px 50px rgba(0,0,0,.3);
+        }
+
+        .logo {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 15px;
+            background: #fff;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .brand {
+            text-align: center;
+            font-size: 11px;
+            letter-spacing: 3px;
+            color: #93c5fd;
+            margin-bottom: 5px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 26px; /* Ukuran teks lebih aman untuk mobile */
+            color: #fff;
+            margin-bottom: 10px;
+            font-weight: 800;
+        }
+
+        .subtitle {
+            text-align: center;
+            line-height: 1.5;
+            color: #cbd5e1;
+            font-size: 13px;
+            margin-bottom: 25px;
+            padding: 0 10px;
+        }
+
+        .qris-box {
+            background: white;
+            padding: 20px;
+            border-radius: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .qris-box img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+        }
+
+        .qris-box p {
+            margin-top: 15px;
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #dbeafe;
+            font-size: 14px;
+            padding-left: 5px;
+        }
+
+        input[type="text"], 
+        input[type="number"] {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid transparent;
+            outline: none;
+            border-radius: 16px;
+            font-size: 16px; /* Mencegah auto-zoom di iOS Safari */
+            background: rgba(255,255,255,0.9);
+            color: #1e293b;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #6366f1;
+            background: #fff;
+        }
+
+        .file-box {
+            background: rgba(255,255,255,.08);
+            padding: 15px;
+            border-radius: 16px;
+            border: 2px dashed rgba(255,255,255,0.2);
+        }
+
+        input[type="file"] {
+            color: #cbd5e1;
+            font-size: 13px;
+            width: 100%;
+        }
+
+        .preview {
+            margin-top: 15px;
+            display: none;
+            text-align: center;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 16px;
+        }
+
+        .preview img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 12px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 20px;
+            padding: 18px;
+            border: none;
+            border-radius: 18px;
+            background: #fff;
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 16px;
+            cursor: pointer;
+            transition: .3s;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .back {
+            display: block;
+            text-align: center;
+            margin-top: 25px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Khusus Layar Sangat Kecil */
+        @media (max-width: 360px) {
+            .card { padding: 20px; }
+            h2 { font-size: 22px; }
+            .logo { width: 60px; height: 60px; font-size: 28px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="brand">FIKK GYM UNESA</div>
+    <div class="logo">💳</div>
+    
+    <h2>Pembayaran QRIS</h2>
+    <p class="subtitle">Scan kode QR di bawah ini, kemudian unggah bukti transfer untuk verifikasi.</p>
+
+    <div class="qris-box">
+        <img src="https://i.ibb.co.com/LskJsCX/QR-FITNESS-FIKK-UNESA-1770263117.png" alt="QRIS FIKK UNESA">
+        <p>Mendukung semua e-wallet & Mobile Banking</p>
+    </div>
+
+    <div class="form-group">
+        <label>Nominal Pembayaran</label>
+        <input type="number" id="nominal" placeholder="Masukkan angka saja (Contoh: 50000)" inputmode="numeric">
+    </div>
+
+    <div class="form-group">
+        <label>Bukti Transfer (Gambar)</label>
+        <div class="file-box">
+            <input type="file" id="bukti" accept="image/*" onchange="previewImage(event)">
+        </div>
+    </div>
+
+    <div class="preview" id="previewZone">
+        <img id="imgPreview">
+    </div>
+
+    <button onclick="bayar()">Konfirmasi Pembayaran</button>
+
+    <a href="dashboard-member.html" class="back">← Kembali ke Dashboard</a>
+
+    <div class="footer">Verifikasi Otomatis oleh Admin</div>
+</div>
+
+<script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbxoYlytOrgon7ywvLKoUY21HFr3EWssyZwHZ3ulJwJBwH1sVAy9kXIKDF_x0tbx0h0R/exec";
+
+    function previewImage(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function() {
+            const previewImg = document.getElementById('imgPreview');
+            previewImg.src = reader.result;
+            document.getElementById('previewZone').style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    }
+
+    async function bayar() {
+        const nominalInput = document.getElementById('nominal');
+        const buktiInput = document.getElementById('bukti');
+
+        if (!nominalInput.value || !buktiInput.files.length) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Data Belum Lengkap',
+                text: 'Silakan isi nominal dan lampirkan bukti foto transfer.',
+                confirmButtonColor: '#4f46e5'
+            });
+            return;
+        }
+
+        const file = buktiInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = async function() {
+            const base64 = reader.result.split(',')[1];
+
+            Swal.fire({
+                title: 'Sedang Mengunggah...',
+                html: 'Mohon tunggu sebentar, jangan tutup halaman ini.',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'payment',
+                        memberId: localStorage.getItem('memberId'),
+                        nominal: nominalInput.value,
+                        fileName: file.name,
+                        mimeType: file.type,
+                        fileBase64: base64
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.status) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil Terkirim!',
+                        text: 'Bukti pembayaran telah diterima. Admin akan melakukan verifikasi segera.',
+                        confirmButtonColor: '#10b981'
+                    }).then(() => {
+                        window.location.href = 'dashboard-member.html';
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal Mengunggah',
+                        text: result.message || 'Terjadi kesalahan pada sistem.'
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Kesalahan Jaringan',
+                    text: 'Pastikan koneksi internet Anda stabil dan coba lagi.'
+                });
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>Registrasi Member - FIKK GYM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #0f172a, #1e1b4b, #312e81);
+        }
+
+        .card {
+            width: 100%;
+            max-width: 480px;
+            background: rgba(255, 255, 255, .08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, .15);
+            border-radius: 28px;
+            padding: 30px 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,.3);
+        }
+
+        .logo-container {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 15px;
+            background: #fff;
+            border-radius: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .logo-container img {
+            width: 85%;
+            height: 85%;
+            object-fit: contain;
+        }
+
+        h2 {
+            text-align: center;
+            color: white;
+            font-size: 26px;
+            margin-bottom: 8px;
+            font-weight: 800;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #cbd5e1;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            font-size: 14px;
+            padding: 0 10px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            color: #dbeafe;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 13px;
+            padding-left: 4px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid transparent;
+            border-radius: 14px;
+            font-size: 16px;
+            background: rgba(255,255,255,0.95);
+            outline: none;
+            transition: 0.3s;
+            color: #0f172a;
+        }
+
+        input:focus, select:focus {
+            border-color: #6366f1;
+            background: #fff;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 20px;
+            padding: 16px;
+            border: none;
+            border-radius: 16px;
+            background: #fff;
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 16px;
+            cursor: pointer;
+            transition: .3s;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .back {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        #loading {
+            display: none;
+            margin-top: 15px;
+            text-align: center;
+            color: #60a5fa;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 380px) {
+            .card { padding: 25px 15px; }
+            h2 { font-size: 22px; }
+            .logo-container { width: 80px; height: 80px; }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+    <div class="logo-container">
+        <img src="https://i.ibb.co.com/WNQ2tjLc/dd99ebcb-3875-4e56-bfd2-4ac6a776c6e4-removebg-preview.png" alt="Logo FIKK GYM">
+    </div>
+    <h2>Registrasi</h2>
+    <p class="subtitle">Buat akun untuk memulai perjalanan fitness Anda di FIKK GYM.</p>
+
+    <div class="form-group">
+        <label>Nama Lengkap</label>
+        <input id="nama" placeholder="Contoh: Budi Santoso">
+    </div>
+
+    <div class="form-group">
+        <label>Email</label>
+        <input id="email" type="email" placeholder="email@unesa.ac.id">
+    </div>
+
+    <div class="form-group">
+        <label>Password</label>
+        <input id="password" type="password" placeholder="Min. 6 karakter">
+    </div>
+
+    <div class="form-group">
+        <label>NIM / NIP</label>
+        <input id="nimnip" inputmode="numeric" placeholder="Masukkan nomor identitas">
+    </div>
+
+    <div class="form-group" style="display: flex; gap: 10px;">
+        <div style="flex: 1;">
+            <label>Kategori</label>
+            <select id="kategori">
+                <option>Mahasiswa Fikk</option>
+                <option>Mahasiswa Non Fikk</option>
+                <option>Tendik</option>
+                <option>Dosen</option>
+                <option>Labschool</option>
+                <option>Umum</option>
+            </select>
+        </div>
+        <div style="flex: 1;">
+            <label>Paket</label>
+            <select id="paket">
+                <option value="Bulanan">1 Bulan</option>
+                <option value="2 Bulan">2 Bulan</option>
+                <option value="Harian">Harian</option>
+            </select>
+        </div>
+    </div>
+
+    <button onclick="register()" id="btnReg">Daftar Sekarang</button>
+
+    <div id="loading">Memproses data...</div>
+
+    <a href="index.html" class="back">← Kembali ke Beranda</a>
+</div>
+
+<script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbxoYlytOrgon7ywvLKoUY21HFr3EWssyZwHZ3ulJwJBwH1sVAy9kXIKDF_x0tbx0h0R/exec";
+
+    async function register() {
+        const fields = {
+            nama: document.getElementById('nama'),
+            email: document.getElementById('email'),
+            password: document.getElementById('password'),
+            nimnip: document.getElementById('nimnip'),
+            kategori: document.getElementById('kategori'),
+            paket: document.getElementById('paket')
+        };
+
+        if (!fields.nama.value.trim() || !fields.email.value.trim() || !fields.password.value.trim()) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Data Tidak Lengkap',
+                text: 'Nama, Email, dan Password wajib diisi.',
+                confirmButtonColor: '#4f46e5'
+            });
+            return;
+        }
+
+        const loader = document.getElementById('loading');
+        const btn = document.getElementById('btnReg');
+
+        loader.style.display = 'block';
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+
+        try {
+            let response = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'register',
+                    nama: fields.nama.value.trim(),
+                    email: fields.email.value.trim().toLowerCase(),
+                    password: fields.password.value.trim(),
+                    nimnip: fields.nimnip.value.trim(),
+                    kategori: fields.kategori.value,
+                    paket: fields.paket.value
+                })
+            });
+
+            let result = await response.json();
+            loader.style.display = 'none';
+
+            if (result.status) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Akun Anda telah terdaftar. Silakan login.',
+                    confirmButtonText: 'Ke Halaman Login',
+                    confirmButtonColor: '#10b981'
+                }).then(() => {
+                    window.location.href = 'login.html';
+                });
+            } else {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Registrasi Gagal',
+                    text: result.message || 'Coba lagi beberapa saat lagi.'
+                });
+            }
+        } catch (err) {
+            loader.style.display = 'none';
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            Swal.fire({
+                icon: 'error',
+                title: 'Masalah Koneksi',
+                text: 'Pastikan internet Anda stabil.'
+            });
+        }
+    }
+</script>
+
+</body>
+</html>
