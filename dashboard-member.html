@@ -34,10 +34,6 @@
         .logout{width:100%;padding:16px;border:none;border-radius:18px;background:transparent;border:1px solid rgba(255,255,255,.35);color:white;font-weight:700;cursor:pointer}
         .footer{margin-top:20px;text-align:center;font-size:12px;color:#94a3b8}
 
-        /* Auto-update indicator */
-        .sync-indicator { font-size: 10px; color: rgba(255,255,255,0.3); text-align: center; margin-top: 10px; font-style: italic; }
-
-        /* Loading Overlay Style */
         #loadingOverlay {
             display: none;
             position: fixed;
@@ -90,6 +86,7 @@
             <tr><th>ID Member</th><td id="memberId">-</td></tr>
             <tr><th>NIM/NIP</th><td id="nimnip">-</td></tr>
             <tr><th>Kategori</th><td id="kategori">-</td></tr>
+            <tr><th>Total Hadir</th><td id="totalKehadiran">0 Kali</td></tr>
             <tr><th>Status</th><td><span id="status" class="badge">Memproses...</span></td></tr>
             <tr><th>Berlaku s/d</th><td id="expired">-</td></tr>
         </table>
@@ -106,8 +103,6 @@
     </div>
 
     <button class="logout" onclick="manualLogout()">Logout</button>
-
-    <div class="sync-indicator" id="lastUpdate">Sinkronisasi otomatis aktif</div>
     
     <div class="footer">
         FIKK GYM
@@ -115,7 +110,8 @@
 </div>
 
 <script>
-    const API_URL="https://script.google.com/macros/s/AKfycbxoYlytOrgon7ywvLKoUY21HFr3EWssyZwHZ3ulJwJBwH1sVAy9kXIKDF_x0tbx0h0R/exec";
+    // URL API dari Google Apps Script (Pastikan ini URL New Deployment terbaru)
+    const API_URL="https://script.google.com/macros/s/AKfycbwZSF76UahkADiQkOFAnW2Yl3GZ4ENG1wtQgA3jfskU2nTwdXdSS0XKpSf3-aeOFM53/exec";
     let currentMemberIdForQR = "";
 
     function setGreeting() {
@@ -127,63 +123,78 @@
         document.getElementById('greetingTime').innerText = greeting;
     }
 
+    /**
+     * Fungsi utama untuk memuat data tanpa refresh halaman
+     */
     async function loadData(){
         const mid = localStorage.getItem('memberId');
-        if(!mid) return;
+        if(!mid) {
+            window.location.href = 'login.html';
+            return;
+        }
 
         try {
-            let r = await fetch(API_URL, {
+            let response = await fetch(API_URL, {
                 method:'POST',
                 body:JSON.stringify({ action:'memberData', memberId: mid })
             });
 
-            if (!r.ok) return;
-            let j = await r.json();
-
-            if (!j || j.error) return;
-
-            // 1. Ambil data dasar
-            updateElementIfChanged('greetingName', j.nama || j.Nama || 'Member');
-            updateElementIfChanged('memberId', j.memberId || j.MemberID || '-');
+            if (!response.ok) throw new Error("Network response error");
             
-            let valNimNip = j.nimnip || j.nim || j.nip || j.NIM || j.NIP || j.NIMNIP || '-';
-            updateElementIfChanged('nimnip', valNimNip);
-            updateElementIfChanged('kategori', j.kategori || j.Kategori || '-');
+            let data = await response.json();
+            if (!data || data.status === false) return;
+
+            // Update Nama & ID
+            updateElementIfChanged('greetingName', data.nama || 'Member');
+            updateElementIfChanged('memberId', data.memberId || '-');
             
-            // 2. Logika Validasi Tanggal Expired (Mencegah status Aktif jika tanggal sudah lewat)
-            let statusText = j.statusMember || j.Status || '-';
-            let rawExpired = j.expired || j.Expired;
+            // Update NIM/NIP & Kategori
+            updateElementIfChanged('nimnip', data.nimnip || '-');
+            updateElementIfChanged('kategori', data.kategori || '-');
+
+            // Update Kehadiran secara Real-time (Sesuai update backend terbaru)
+            let valHadir = data.totalKehadiran ?? 0;
+            updateElementIfChanged('totalKehadiran', valHadir + " Kali");
+            
+            // Update Status Membership
+            let statusText = data.statusMember || '-';
+            let rawExpired = data.expired;
             let formattedExpired = '-';
             
-            if (rawExpired && rawExpired !== '-') {
+            if (rawExpired) {
                 const dateExpired = new Date(rawExpired);
                 const today = new Date();
-                today.setHours(0, 0, 0, 0); // Reset jam ke 00:00 untuk perbandingan tanggal saja
-
-                // Cek jika tanggal sudah lewat dari hari ini
-                if (!isNaN(dateExpired) && dateExpired < today) {
+                today.setHours(0, 0, 0, 0);
+                
+                // Cek jika sudah lewat tanggal expired
+                if (!isNaN(dateExpired.getTime()) && dateExpired < today) {
                     statusText = 'Expired';
                 }
 
-                formattedExpired = !isNaN(dateExpired) ? dateExpired.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : rawExpired;
+                if(!isNaN(dateExpired.getTime())) {
+                    formattedExpired = dateExpired.toLocaleDateString('id-ID', { 
+                        day: '2-digit', 
+                        month: 'long', 
+                        year: 'numeric' 
+                    });
+                } else {
+                    formattedExpired = rawExpired;
+                }
             }
             
             updateElementIfChanged('expired', formattedExpired);
 
-            // 3. Update Status Badge
+            // Update Badge Status (Warna & Teks)
             const statusBadge = document.getElementById('status');
             if(statusBadge.innerText !== statusText) {
                 statusBadge.innerText = statusText;
                 statusBadge.className = "badge"; 
-                if(statusText === 'Expired') {
-                    statusBadge.classList.add('badge-expired');
-                } else if(statusText === 'Pending') {
-                    statusBadge.classList.add('badge-pending');
-                }
+                if(statusText === 'Expired') statusBadge.classList.add('badge-expired');
+                else if(statusText === 'Pending') statusBadge.classList.add('badge-pending');
             }
 
-            // 4. Update QR Code hanya jika ID berubah
-            let newId = j.memberId || j.MemberID;
+            // Generate QR Code jika memberId valid
+            let newId = data.memberId;
             if(newId && newId !== currentMemberIdForQR) {
                 const qrContainer = document.getElementById('qrcode');
                 qrContainer.innerHTML = ''; 
@@ -197,19 +208,19 @@
                 });
                 currentMemberIdForQR = newId;
             }
-
-            // Update timestamp sinkronisasi
-            document.getElementById('lastUpdate').innerText = "Data diperbarui: " + new Date().toLocaleTimeString('id-ID');
-
         } catch (error) {
-            console.error("Auto-sync failed:", error);
+            console.error("Auto-sync error:", error);
         }
     }
 
+    /**
+     * Memperbarui elemen UI hanya jika nilainya berbeda
+     * Mencegah "flicker" atau kedipan pada layar saat update otomatis
+     */
     function updateElementIfChanged(id, newValue) {
         const el = document.getElementById(id);
-        if(el && el.innerHTML !== newValue) {
-            el.innerHTML = newValue;
+        if(el && el.innerText !== String(newValue)) {
+            el.innerText = newValue;
         }
     }
 
@@ -223,11 +234,13 @@
         window.location.href = 'login.html';
     }
 
+    // Inisialisasi awal
     setGreeting();
     loadData();
 
-    // Sinkronisasi otomatis setiap 30 detik
-    setInterval(loadData, 30000);
+    // SINKRONISASI OTOMATIS: Berjalan setiap 10 detik agar data selalu up-to-date
+    // User tidak perlu merefresh browser jika sudah di-scan admin
+    setInterval(loadData, 10000); 
 </script>
 
 </body>
