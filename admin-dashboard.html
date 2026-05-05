@@ -90,7 +90,6 @@
         .modal-text{line-height:1.6;font-size:16px;margin-bottom:22px; color: #4b5563;}
         .modal-ok{background:#4f46e5;color:#fff;border:none;padding:14px 40px;border-radius:14px;font-weight:800;cursor:pointer; width: 100%;}
         
-        /* Preview Image Style */
         .preview-img-container { background: #f3f4f6; border-radius: 15px; padding: 10px; margin-bottom: 15px; min-height: 200px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; border: 2px dashed #cbd5e1;}
         .preview-img{width:100%; max-height:450px; object-fit:contain; border-radius:10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
     </style>
@@ -179,7 +178,7 @@
 </div>
 
 <script>
-const API_URL="https://script.google.com/macros/s/AKfycbwZSF76UahkADiQkOFAnW2Yl3GZ4ENG1wtQgA3jfskU2nTwdXdSS0XKpSf3-aeOFM53/exec";
+const API_URL="https://script.google.com/macros/s/AKfycbxoYlytOrgon7ywvLKoUY21HFr3EWssyZwHZ3ulJwJBwH1sVAy9kXIKDF_x0tbx0h0R/exec";
 let scanner;
 let scanLock=false;
 let allMembers=[];
@@ -308,13 +307,9 @@ async function loadApprovalList(){
     document.getElementById('membersApprovalList').innerHTML= count > 0 ? h+'</tbody></table>' : '<p style="text-align:center;padding:20px">Tidak ada antrean approval.</p>';
 }
 
-/**
- * PERBAIKAN: Fungsi viewEvidence sekarang memanggil 'getPaymentEvidence'
- */
 async function viewEvidence(id, nama) {
     showModal('⏳', 'Memuat Bukti...', `Mencari data untuk <b>${nama}</b>...`);
     try {
-        // Memanggil action getPaymentEvidence yang ada di kode GAS baris 44
         let r = await fetch(API_URL, {
             method: 'POST',
             body: JSON.stringify({ action: 'getPaymentEvidence', memberId: id })
@@ -323,8 +318,6 @@ async function viewEvidence(id, nama) {
         
         if(j.status && j.fotoBukti) {
             let fileUrl = j.fotoBukti;
-
-            // Handle link Drive agar gambar muncul langsung (lh3 bypass)
             if(fileUrl.includes('drive.google.com')){
                 let fileId = "";
                 if(fileUrl.includes('id=')) fileId = fileUrl.split('id=')[1].split('&')[0];
@@ -342,7 +335,7 @@ async function viewEvidence(id, nama) {
             `;
             showModal('🧾', 'Bukti Pembayaran', imgHtml);
         } else {
-            showModal('❓', 'Data Kosong', `Sistem tidak menemukan link bukti untuk <b>${nama}</b> di sheet <b>Payments</b>.`);
+            showModal('❓', 'Data Kosong', `Sistem tidak menemukan  bukti pembayaran untuk <b>${nama}</b> di  <b>Payments</b>.`);
         }
     } catch(e) {
         showModal('❌', 'Error', 'Gagal memuat bukti pembayaran dari server.');
@@ -468,18 +461,34 @@ async function loadRekap(){
         let tanggal='-';
         let d=new Date(x[0]);
         if(!isNaN(d)) tanggal=d.toLocaleDateString('id-ID');
+        
         let jamRaw = x[3]||'-';
         let jamTampil = jamRaw;
-        if (typeof jamRaw === 'string' && jamRaw.includes('T')) {
-            jamTampil = jamRaw.split('T')[1].split('.')[0];
-        } else if (jamRaw !== '-') {
-            let dj = new Date(jamRaw);
-            if(!isNaN(dj.getTime())){
-                jamTampil = dj.getHours().toString().padStart(2, '0') + ':' + 
-                            dj.getMinutes().toString().padStart(2, '0') + ':' + 
-                            dj.getSeconds().toString().padStart(2, '0');
+        
+        // Logika Perbaikan Zona Waktu (UTC to Local)
+        try {
+            if (typeof jamRaw === 'string') {
+                // Jika format string ISO (Z), konversi ke waktu lokal WIB (UTC+7)
+                if (jamRaw.includes('T') || jamRaw.includes('Z')) {
+                    let dj = new Date(jamRaw);
+                    if(!isNaN(dj.getTime())){
+                        jamTampil = dj.toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    }
+                } else if (jamRaw.includes(':') && jamRaw.length > 8) {
+                    let match = jamRaw.match(/\d{2}:\d{2}:\d{2}/);
+                    if (match) jamTampil = match[0];
+                }
+            } else if (jamRaw) {
+                // Jika berupa objek Date atau angka serial dari Google Sheets
+                let dj = new Date(jamRaw);
+                if(!isNaN(dj.getTime())){
+                    jamTampil = dj.toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                }
             }
+        } catch(e) {
+            jamTampil = jamRaw;
         }
+        
         let nama=x[2]||'Tanpa Nama';
         hadir[nama]=(hadir[nama]||0)+1;
         h+=`<tr><td>${nama} (${x[1]})</td><td>${tanggal}</td><td>${jamTampil}</td></tr>`;
