@@ -118,7 +118,13 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
 
-        button:active {
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        button:active:not(:disabled) {
             transform: scale(0.98);
         }
 
@@ -160,7 +166,7 @@
 
     <div class="form-group">
         <label>Nama Lengkap</label>
-        <input id="nama" placeholder="Contoh: Budi Santoso">
+        <input id="nama" type="text" placeholder="Contoh: Budi Santoso">
     </div>
 
     <div class="form-group">
@@ -208,7 +214,13 @@
 </div>
 
 <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzZc0EvxoSPdn_QJRQJuFgHUIQ9wNbcWwYm836GIQyAx8h-3nAUxAXvNf0qzldO4j4/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbxoYlytOrgon7ywvLKoUY21HFr3EWssyZwHZ3ulJwJBwH1sVAy9kXIKDF_x0tbx0h0R/exec";
+
+    // Fungsi validasi email
+    function validateEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(String(email).toLowerCase());
+    }
 
     async function register() {
         const fields = {
@@ -220,11 +232,36 @@
             paket: document.getElementById('paket')
         };
 
-        if (!fields.nama.value.trim() || !fields.email.value.trim() || !fields.password.value.trim()) {
+        const emailValue = fields.email.value.trim();
+
+        // 1. Validasi Input Kosong
+        if (!fields.nama.value.trim() || !emailValue || !fields.password.value.trim()) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Data Tidak Lengkap',
                 text: 'Nama, Email, dan Password wajib diisi.',
+                confirmButtonColor: '#4f46e5'
+            });
+            return;
+        }
+
+        // 2. Validasi Format Email (Cegah input angka saja atau teks tidak valid)
+        if (!validateEmail(emailValue)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Email Tidak Valid',
+                text: 'Silakan masukkan alamat email yang benar (contoh: user@gmail.com).',
+                confirmButtonColor: '#ef4444'
+            });
+            return;
+        }
+
+        // 3. Validasi Panjang Password
+        if (fields.password.value.length < 6) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Password Terlalu Pendek',
+                text: 'Password minimal harus 6 karakter.',
                 confirmButtonColor: '#4f46e5'
             });
             return;
@@ -243,7 +280,7 @@
                 body: JSON.stringify({
                     action: 'register',
                     nama: fields.nama.value.trim(),
-                    email: fields.email.value.trim().toLowerCase(),
+                    email: emailValue.toLowerCase(),
                     password: fields.password.value.trim(),
                     nimnip: fields.nimnip.value.trim(),
                     kategori: fields.kategori.value,
