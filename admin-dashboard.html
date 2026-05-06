@@ -16,7 +16,6 @@
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
         .topbar button{padding:12px 20px;border:none;border-radius:14px;font-weight:700;cursor:pointer;background:#ef4444;color:#fff; transition: opacity 0.3s}
         .topbar button:hover { opacity: 0.8; }
@@ -34,39 +33,9 @@
         .panel{display:none;background:rgba(255,255,255,.08);padding:30px;border-radius:28px;margin-bottom:20px; border: 1px solid rgba(255,255,255,0.05);}
         .panel.active{display:block}
         
-        .price-table-input { 
-            width: 100%; 
-            padding: 10px; 
-            border-radius: 8px; 
-            border: 1px solid #ddd; 
-            background: #fff; 
-            color: #333; 
-            font-size: 14px;
-            font-weight: 500;
-        }
-        .price-table-textarea { 
-            width: 100%; 
-            padding: 10px; 
-            border-radius: 8px; 
-            border: 1px solid #ddd; 
-            background: #fff; 
-            color: #333; 
-            font-size: 13px;
-            font-weight: 500;
-            height: 60px;
-            resize: vertical;
-        }
-        .save-row-btn { 
-            padding: 10px 15px; 
-            border-radius: 10px; 
-            border: none; 
-            background: #22c55e; 
-            color: #fff; 
-            font-weight: 700; 
-            cursor: pointer; 
-            transition: 0.3s;
-            white-space: nowrap;
-        }
+        .price-table-input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fff; color: #333; font-size: 14px; font-weight: 500; }
+        .price-table-textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fff; color: #333; font-size: 13px; font-weight: 500; height: 60px; resize: vertical; }
+        .save-row-btn { padding: 10px 15px; border-radius: 10px; border: none; background: #22c55e; color: #fff; font-weight: 700; cursor: pointer; transition: 0.3s; white-space: nowrap; }
         .save-row-btn:hover { background: #16a34a; transform: scale(1.05); }
 
         #reader{max-width:500px;margin:20px auto; border-radius: 20px; overflow: hidden; background: #000 !important; border: none !important;}
@@ -95,16 +64,7 @@
         .preview-img-container { background: #f3f4f6; border-radius: 15px; padding: 10px; margin-bottom: 15px; min-height: 200px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; border: 2px dashed #cbd5e1;}
         .preview-img{width:100%; max-height:450px; object-fit:contain; border-radius:10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
 
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border-left-color: #4f46e5;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-bottom: 15px;
-        }
+        .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 40px; height: 40px; border-radius: 50%; border-left-color: #4f46e5; animation: spin 1s linear infinite; display: inline-block; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -173,7 +133,6 @@
 <div id="pricing" class="panel">
     <h3>Manajemen Price List (Home)</h3>
     <p style="font-size: 13px; color: #94a3b8; margin-bottom: 10px;">Perubahan di sini akan langsung merubah tampilan harga di halaman pendaftaran member.</p>
-    
     <div class="table-wrap">
         <table id="pricingTable">
             <thead>
@@ -247,7 +206,6 @@ function showTab(id){
     
     if(id==='approval') loadApprovalList();
     if(id==='membersTab') {
-        // Hanya reset judul jika dipanggil langsung dari tombol tab
         if(document.getElementById('memberListTitle').innerText.indexOf('Status:') === -1) {
              document.getElementById('memberListTitle').innerText = "Daftar Seluruh Member";
         }
@@ -257,20 +215,15 @@ function showTab(id){
 }
 
 async function filterByStatus(status) {
-    // 1. Tampilkan tab member terlebih dahulu
     showTab('membersTab');
-    
-    // 2. Update judul daftar member agar sesuai filter
     document.getElementById('memberListTitle').innerText = status === 'all' ? "Daftar Seluruh Member" : "Member Status: " + status;
     
-    // 3. Pastikan data allMembers sudah ada (atau load ulang)
     if (allMembers.length === 0) {
         let r = await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'membersList'})});
         let j = await r.json();
         allMembers = j.rows.slice(1);
     }
     
-    // 4. Lakukan filter data di memory
     if (status === 'all') {
         renderMemberTable(allMembers);
     } else {
@@ -279,25 +232,38 @@ async function filterByStatus(status) {
     }
 }
 
-function onScanSuccess(decodedText){
+// PERBAIKAN: Fungsi presensi yang mencari nama di lokal jika server tidak mengirimkannya
+async function onScanSuccess(decodedText){
     if(scanLock)return;
     scanLock=true;
     document.getElementById('beepSound').play();
     
+    // Ambil nama dari cache lokal untuk jaga-jaga jika status presensi gagal
+    let localMember = allMembers.find(m => m[0] == decodedText);
+    let localName = localMember ? localMember[1] : "Member";
+
     fetch(API_URL,{
         method:'POST',
         body:JSON.stringify({action:'presensi',memberId:decodedText})
     })
     .then(r=>r.json())
     .then(d=>{
+        // Gunakan nama dari server jika ada, jika tidak gunakan cache lokal
+        let displayName = d.nama || localName;
+
         if(d.status){
-            showModal('✅','Check-In Berhasil','👤 Nama : <b>'+(d.nama||'-')+'</b><br><br>🆔 Member : <b>'+decodedText+'</b><br><br>🟢 Status : <b>Aktif</b>');
+            showModal('✅','Check-In Berhasil','👤 Nama : <b>'+displayName+'</b><br><br>🆔 Member : <b>'+decodedText+'</b><br><br>🟢 Status : <b>Aktif</b>');
         }else{
-            showModal('⚠️','Check-In Ditolak','👤 Nama : <b>'+(d.nama||'-')+'</b><br><br>🆔 Member : <b>'+decodedText+'</b><br><br>🔴 Status : <b>'+d.message+'</b>');
+            let icon = '⚠️';
+            if(d.message && d.message.toLowerCase().includes('expired')) icon = '🚫';
+            if(d.message && d.message.toLowerCase().includes('sudah presensi')) icon = '⏳';
+
+            showModal(icon,'Check-In Ditolak','👤 Nama : <b>'+displayName+'</b><br><br>🆔 Member : <b>'+decodedText+'</b><br><br>🔴 Status : <b>'+(d.message || 'Gagal')+'</b>');
         }
         loadStats();
         setTimeout(()=>scanLock=false,3000);
     }).catch(err => {
+        showModal('❌','Error','Gagal terhubung ke server saat memproses ID: ' + decodedText);
         scanLock=false;
     });
 }
@@ -319,6 +285,11 @@ async function loadStats(){
         document.getElementById('aktif').innerHTML=j.aktif||0;
         document.getElementById('pending').innerHTML=j.pending||0;
         document.getElementById('expired').innerHTML=j.expired||0;
+        
+        // Update allMembers cache setiap kali reload stats
+        let rl = await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'membersList'})});
+        let jl = await rl.json();
+        allMembers = jl.rows.slice(1);
     } catch(e) {}
 }
 
@@ -405,7 +376,6 @@ async function approve(id){
 }
 
 async function loadAllMembers(){
-    // Jika sudah terfilter, kita tidak ingin menimpa render yang sudah ada kecuali data di memory masih kosong
     if (allMembers.length === 0) {
         document.getElementById('memberTableWrapper').innerHTML = "<p style='padding:20px'>Memuat data member...</p>";
         let r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'membersList'})});
@@ -413,7 +383,6 @@ async function loadAllMembers(){
         allMembers=j.rows.slice(1);
     }
     
-    // Periksa apakah ada filter status yang sedang aktif
     const currentTitle = document.getElementById('memberListTitle').innerText;
     if (currentTitle.includes("Status: Pending")) {
         renderMemberTable(allMembers.filter(m => m[7] === 'Pending'));
@@ -431,19 +400,28 @@ function renderMemberTable(data){
         document.getElementById('memberTableWrapper').innerHTML = "<p style='padding:40px;text-align:center;color:#fff'>Data tidak ditemukan untuk kategori ini.</p>";
         return;
     }
-    let h='<table><thead><tr><th>Nama Member</th><th>ID</th><th>Status</th><th>Expired</th></tr></thead><tbody>';
+    let h='<table><thead><tr><th>Nama Member</th><th>ID</th><th>Kategori</th><th>Status</th><th>Expired</th></tr></thead><tbody>';
     data.forEach(x=>{
         let exp='-';
         if(x[8]){
             let d=new Date(x[8]);
             exp=!isNaN(d)?d.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}):x[8];
         }
+        
+        let kategori = x[5] || '-';
+        
         let bClass = 'badge-active';
         if(x[7] === 'Expired') bClass = 'badge-expired';
         if(x[7] === 'Pending') bClass = 'badge-pending';
         
         let badge=`<span class="${bClass}">${x[7]}</span>`;
-        h+=`<tr><td><b>${x[1]}</b></td><td>${x[0]}</td><td>${badge}</td><td>${exp}</td></tr>`;
+        h+=`<tr>
+            <td><b>${x[1]}</b></td>
+            <td>${x[0]}</td>
+            <td><span style="font-size:13px; color:#64748b; font-weight:600;">${kategori}</span></td>
+            <td>${badge}</td>
+            <td>${exp}</td>
+        </tr>`;
     });
     document.getElementById('memberTableWrapper').innerHTML=h+'</tbody></table>';
 }
@@ -471,18 +449,10 @@ async function loadPricingData() {
             j.data.forEach((item, index) => {
                 tbody.innerHTML += `
                     <tr>
-                        <td>
-                            <input type="text" class="price-table-input" id="cat-${index}" value="${item.category}">
-                        </td>
-                        <td>
-                            <input type="text" class="price-table-input" id="pri-${index}" value="${item.price}">
-                        </td>
-                        <td>
-                            <textarea class="price-table-textarea" id="desc-${index}">${item.desc}</textarea>
-                        </td>
-                        <td style="text-align: center;">
-                            <button class="save-row-btn" onclick="savePrice(${index})">Update</button>
-                        </td>
+                        <td><input type="text" class="price-table-input" id="cat-${index}" value="${item.category}"></td>
+                        <td><input type="text" class="price-table-input" id="pri-${index}" value="${item.price}"></td>
+                        <td><textarea class="price-table-textarea" id="desc-${index}">${item.desc}</textarea></td>
+                        <td style="text-align: center;"><button class="save-row-btn" onclick="savePrice(${index})">Update</button></td>
                     </tr>
                 `;
             });
@@ -498,19 +468,11 @@ async function savePrice(index) {
     const category = document.getElementById(`cat-${index}`).value;
     const price = document.getElementById(`pri-${index}`).value;
     const desc = document.getElementById(`desc-${index}`).value;
-    
     showLoadingModal('Menyimpan...', 'Harap tunggu sebentar...');
-    
     try {
         const r = await fetch(API_URL, {
             method: 'POST',
-            body: JSON.stringify({
-                action: 'updatePricing',
-                index: index,
-                category: category,
-                price: price,
-                desc: desc
-            })
+            body: JSON.stringify({ action: 'updatePricing', index: index, category: category, price: price, desc: desc })
         });
         const j = await r.json();
         if(j.status) {
