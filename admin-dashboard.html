@@ -16,6 +16,7 @@
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         .topbar button{padding:12px 20px;border:none;border-radius:14px;font-weight:700;cursor:pointer;background:#ef4444;color:#fff; transition: opacity 0.3s}
         .topbar button:hover { opacity: 0.8; }
@@ -51,6 +52,7 @@
             background: #fff; 
             color: #333; 
             font-size: 13px;
+            font-weight: 500;
             height: 60px;
             resize: vertical;
         }
@@ -92,6 +94,18 @@
         
         .preview-img-container { background: #f3f4f6; border-radius: 15px; padding: 10px; margin-bottom: 15px; min-height: 200px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; border: 2px dashed #cbd5e1;}
         .preview-img{width:100%; max-height:450px; object-fit:contain; border-radius:10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border-left-color: #4f46e5;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -100,10 +114,12 @@
 
 <div id="scanModal">
     <div class="modal-box">
-        <div class="modal-icon" id="modalIcon">✅</div>
-        <div class="modal-title" id="modalTitle">Info</div>
-        <div class="modal-text" id="modalText"></div>
-        <button class="modal-ok" onclick="closeModal()">OKE</button>
+        <div id="modalContent">
+            <div class="modal-icon" id="modalIcon">✅</div>
+            <div class="modal-title" id="modalTitle">Info</div>
+            <div class="modal-text" id="modalText"></div>
+            <button class="modal-ok" id="modalOkBtn" onclick="closeModal()">OKE</button>
+        </div>
     </div>
 </div>
 
@@ -178,7 +194,7 @@
 </div>
 
 <script>
-const API_URL="https://script.google.com/macros/s/AKfycbxoYlytOrgon7ywvLKoUY21HFr3EWssyZwHZ3ulJwJBwH1sVAy9kXIKDF_x0tbx0h0R/exec";
+const API_URL="https://script.google.com/macros/s/AKfycbyeR6fBjAhBhC_U4oVZDYleYcClwLi6ORF3y0sv1Ob3DcBQ29v0UwmgkQw9RxxtflvP/exec";
 let scanner;
 let scanLock=false;
 let allMembers=[];
@@ -207,12 +223,19 @@ document.addEventListener("keydown", function(e) {
     }
 });
 
-function showModal(icon,title,html){
-    document.getElementById('modalIcon').innerHTML=icon;
-    document.getElementById('modalTitle').innerHTML=title;
-    document.getElementById('modalText').innerHTML=html;
-    document.getElementById('scanModal').style.display='flex';
+function showModal(icon, title, html, showBtn = true) {
+    document.getElementById('modalIcon').innerHTML = icon;
+    document.getElementById('modalTitle').innerHTML = title;
+    document.getElementById('modalText').innerHTML = html;
+    document.getElementById('modalOkBtn').style.display = showBtn ? 'block' : 'none';
+    document.getElementById('scanModal').style.display = 'flex';
 }
+
+function showLoadingModal(title, text) {
+    const spinner = '<div class="spinner"></div>';
+    showModal(spinner, title, text, false);
+}
+
 function closeModal(){ document.getElementById('scanModal').style.display='none'; }
 function logout(){ location='index.html' }
 
@@ -224,16 +247,30 @@ function showTab(id){
     
     if(id==='approval') loadApprovalList();
     if(id==='membersTab') {
-        document.getElementById('memberListTitle').innerText = "Daftar Seluruh Member";
+        // Hanya reset judul jika dipanggil langsung dari tombol tab
+        if(document.getElementById('memberListTitle').innerText.indexOf('Status:') === -1) {
+             document.getElementById('memberListTitle').innerText = "Daftar Seluruh Member";
+        }
         loadAllMembers();
     }
     if(id==='pricing') loadPricingData();
 }
 
 async function filterByStatus(status) {
+    // 1. Tampilkan tab member terlebih dahulu
     showTab('membersTab');
+    
+    // 2. Update judul daftar member agar sesuai filter
     document.getElementById('memberListTitle').innerText = status === 'all' ? "Daftar Seluruh Member" : "Member Status: " + status;
-    if (allMembers.length === 0) await loadAllMembers();
+    
+    // 3. Pastikan data allMembers sudah ada (atau load ulang)
+    if (allMembers.length === 0) {
+        let r = await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'membersList'})});
+        let j = await r.json();
+        allMembers = j.rows.slice(1);
+    }
+    
+    // 4. Lakukan filter data di memory
     if (status === 'all') {
         renderMemberTable(allMembers);
     } else {
@@ -308,7 +345,7 @@ async function loadApprovalList(){
 }
 
 async function viewEvidence(id, nama) {
-    showModal('⏳', 'Memuat Bukti...', `Mencari data untuk <b>${nama}</b>...`);
+    showLoadingModal('Memuat Bukti...', `Mencari data pembayaran untuk <b>${nama}</b>...`);
     try {
         let r = await fetch(API_URL, {
             method: 'POST',
@@ -335,7 +372,7 @@ async function viewEvidence(id, nama) {
             `;
             showModal('🧾', 'Bukti Pembayaran', imgHtml);
         } else {
-            showModal('❓', 'Data Kosong', `Sistem tidak menemukan  bukti pembayaran untuk <b>${nama}</b> di  <b>Payments</b>.`);
+            showModal('❓', 'Data Kosong', `Sistem tidak menemukan bukti pembayaran untuk <b>${nama}</b>.`);
         }
     } catch(e) {
         showModal('❌', 'Error', 'Gagal memuat bukti pembayaran dari server.');
@@ -344,24 +381,54 @@ async function viewEvidence(id, nama) {
 
 async function approve(id){
     let d=prompt('Durasi Aktif (Hari)',30);
-    if(!d)return;
-    await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'approveMember',memberId:id,durasiHari:d})});
-    showModal('🎉','Membership Disetujui','Member berhasil diaktifkan');
-    loadApprovalList();
-    loadStats();
+    if(!d) return;
+    
+    showLoadingModal('Memproses...', 'Sedang mengaktifkan membership, mohon tunggu...');
+
+    try {
+        let r = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({action:'approveMember', memberId:id, durasiHari:d})
+        });
+        let res = await r.json();
+
+        if(res.status) {
+            showModal('🎉', 'Berhasil', 'Member berhasil diaktifkan!');
+            loadApprovalList();
+            loadStats();
+        } else {
+            showModal('❌', 'Gagal', 'Terjadi kesalahan saat memproses approval.');
+        }
+    } catch(e) {
+        showModal('❌', 'Error', 'Gagal terhubung ke server.');
+    }
 }
 
 async function loadAllMembers(){
-    document.getElementById('memberTableWrapper').innerHTML = "<p style='padding:20px'>Memuat data member...</p>";
-    let r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'membersList'})});
-    let j=await r.json();
-    allMembers=j.rows.slice(1);
-    renderMemberTable(allMembers);
+    // Jika sudah terfilter, kita tidak ingin menimpa render yang sudah ada kecuali data di memory masih kosong
+    if (allMembers.length === 0) {
+        document.getElementById('memberTableWrapper').innerHTML = "<p style='padding:20px'>Memuat data member...</p>";
+        let r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'membersList'})});
+        let j=await r.json();
+        allMembers=j.rows.slice(1);
+    }
+    
+    // Periksa apakah ada filter status yang sedang aktif
+    const currentTitle = document.getElementById('memberListTitle').innerText;
+    if (currentTitle.includes("Status: Pending")) {
+        renderMemberTable(allMembers.filter(m => m[7] === 'Pending'));
+    } else if (currentTitle.includes("Status: Expired")) {
+        renderMemberTable(allMembers.filter(m => m[7] === 'Expired'));
+    } else if (currentTitle.includes("Status: Aktif")) {
+        renderMemberTable(allMembers.filter(m => m[7] === 'Aktif'));
+    } else {
+        renderMemberTable(allMembers);
+    }
 }
 
 function renderMemberTable(data){
     if(data.length === 0) {
-        document.getElementById('memberTableWrapper').innerHTML = "<p style='padding:20px;text-align:center;color:#fff'>Data tidak ditemukan.</p>";
+        document.getElementById('memberTableWrapper').innerHTML = "<p style='padding:40px;text-align:center;color:#fff'>Data tidak ditemukan untuk kategori ini.</p>";
         return;
     }
     let h='<table><thead><tr><th>Nama Member</th><th>ID</th><th>Status</th><th>Expired</th></tr></thead><tbody>';
@@ -383,7 +450,14 @@ function renderMemberTable(data){
 
 function searchMember(){
     let v=document.getElementById('searchInput').value.toLowerCase();
-    renderMemberTable(allMembers.filter(r=>r[1].toLowerCase().includes(v)||r[0].toLowerCase().includes(v)));
+    const currentTitle = document.getElementById('memberListTitle').innerText;
+    
+    let baseData = allMembers;
+    if (currentTitle.includes("Status: Pending")) baseData = allMembers.filter(m => m[7] === 'Pending');
+    else if (currentTitle.includes("Status: Expired")) baseData = allMembers.filter(m => m[7] === 'Expired');
+    else if (currentTitle.includes("Status: Aktif")) baseData = allMembers.filter(m => m[7] === 'Aktif');
+
+    renderMemberTable(baseData.filter(r=>r[1].toLowerCase().includes(v)||r[0].toLowerCase().includes(v)));
 }
 
 async function loadPricingData() {
@@ -424,7 +498,9 @@ async function savePrice(index) {
     const category = document.getElementById(`cat-${index}`).value;
     const price = document.getElementById(`pri-${index}`).value;
     const desc = document.getElementById(`desc-${index}`).value;
-    showModal('⏳', 'Menyimpan...', 'Harap tunggu sebentar...');
+    
+    showLoadingModal('Menyimpan...', 'Harap tunggu sebentar...');
+    
     try {
         const r = await fetch(API_URL, {
             method: 'POST',
@@ -465,10 +541,8 @@ async function loadRekap(){
         let jamRaw = x[3]||'-';
         let jamTampil = jamRaw;
         
-        // Logika Perbaikan Zona Waktu (UTC to Local)
         try {
             if (typeof jamRaw === 'string') {
-                // Jika format string ISO (Z), konversi ke waktu lokal WIB (UTC+7)
                 if (jamRaw.includes('T') || jamRaw.includes('Z')) {
                     let dj = new Date(jamRaw);
                     if(!isNaN(dj.getTime())){
@@ -479,7 +553,6 @@ async function loadRekap(){
                     if (match) jamTampil = match[0];
                 }
             } else if (jamRaw) {
-                // Jika berupa objek Date atau angka serial dari Google Sheets
                 let dj = new Date(jamRaw);
                 if(!isNaN(dj.getTime())){
                     jamTampil = dj.toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
