@@ -41,10 +41,29 @@
         #reader{max-width:500px;margin:20px auto; border-radius: 20px; overflow: hidden; background: #000 !important; border: none !important;}
         .search-box{width:100%;padding:15px;border:none;border-radius:12px;margin-bottom:15px; background: rgba(255,255,255,0.9); color: #000; font-weight: 600;}
         
-        .table-wrap { overflow-x: auto; border-radius: 15px; margin-top: 15px; }
-        table{width:100%;border-collapse:collapse;background:#fff;color:#111827; overflow:hidden}
+        /* FIX: Freeze Header & Scroll Control */
+        .table-wrap { 
+            overflow-x: auto; 
+            overflow-y: auto; 
+            border-radius: 15px; 
+            margin-top: 15px; 
+            max-height: 500px; /* Batas tinggi scroll tabel */
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        table{width:100%;border-collapse:collapse;background:#fff;color:#111827; position: relative;}
         th,td{padding:15px;border-bottom:1px solid #eee;text-align:left}
-        th{background:#f3f4f6; font-size: 12px; text-transform: uppercase; color: #64748b;}
+        
+        /* Sticky Header Logic */
+        th {
+            background:#f3f4f6; 
+            font-size: 12px; 
+            text-transform: uppercase; 
+            color: #64748b;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
+        }
         
         .action-btn{padding:10px 15px;border:none;border-radius:10px;background:#22c55e;color:#fff;font-weight:700;cursor:pointer}
         .view-btn{padding:10px 15px;border:none;border-radius:10px;background:#3b82f6;color:#fff;font-weight:700;cursor:pointer;margin-right:5px}
@@ -232,13 +251,11 @@ async function filterByStatus(status) {
     }
 }
 
-// PERBAIKAN: Fungsi presensi yang mencari nama di lokal jika server tidak mengirimkannya
 async function onScanSuccess(decodedText){
     if(scanLock)return;
     scanLock=true;
     document.getElementById('beepSound').play();
     
-    // Ambil nama dari cache lokal untuk jaga-jaga jika status presensi gagal
     let localMember = allMembers.find(m => m[0] == decodedText);
     let localName = localMember ? localMember[1] : "Member";
 
@@ -248,7 +265,6 @@ async function onScanSuccess(decodedText){
     })
     .then(r=>r.json())
     .then(d=>{
-        // Gunakan nama dari server jika ada, jika tidak gunakan cache lokal
         let displayName = d.nama || localName;
 
         if(d.status){
@@ -286,7 +302,6 @@ async function loadStats(){
         document.getElementById('pending').innerHTML=j.pending||0;
         document.getElementById('expired').innerHTML=j.expired||0;
         
-        // Update allMembers cache setiap kali reload stats
         let rl = await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'membersList'})});
         let jl = await rl.json();
         allMembers = jl.rows.slice(1);
@@ -296,7 +311,7 @@ async function loadStats(){
 async function loadApprovalList(){
     let r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'membersList'})});
     let j=await r.json();
-    let h='<table><thead><tr><th>Nama</th><th>Paket</th><th>Aksi</th></tr></thead><tbody>';
+    let h='<table style="width:100%"><thead><tr><th>Nama</th><th>Paket</th><th>Aksi</th></tr></thead><tbody>';
     let count = 0;
     for(let i=1;i<j.rows.length;i++){
         if(j.rows[i][7]=='Pending'){
@@ -400,7 +415,7 @@ function renderMemberTable(data){
         document.getElementById('memberTableWrapper').innerHTML = "<p style='padding:40px;text-align:center;color:#fff'>Data tidak ditemukan untuk kategori ini.</p>";
         return;
     }
-    let h='<table><thead><tr><th>Nama Member</th><th>ID</th><th>Kategori</th><th>Status</th><th>Expired</th></tr></thead><tbody>';
+    let h='<table style="width:100%"><thead><tr><th>Nama Member</th><th>ID</th><th>Kategori</th><th>Status</th><th>Expired</th></tr></thead><tbody>';
     data.forEach(x=>{
         let exp='-';
         if(x[8]){
@@ -494,7 +509,7 @@ async function loadRekap(){
     if(!j.data||!j.data.length){document.getElementById('rekapTable').innerHTML='<p style="padding:20px">Tidak ada data kunjungan pada bulan ini.</p>';return;}
     
     let hadir={};
-    let h='<table><thead><tr><th>Nama (ID)</th><th>Tanggal</th><th>Waktu</th></tr></thead><tbody>';
+    let h='<table style="width:100%"><thead><tr><th>Nama (ID)</th><th>Tanggal</th><th>Waktu</th></tr></thead><tbody>';
     j.data.forEach(x=>{
         let tanggal='-';
         let d=new Date(x[0]);
@@ -528,7 +543,7 @@ async function loadRekap(){
         hadir[nama]=(hadir[nama]||0)+1;
         h+=`<tr><td>${nama} (${x[1]})</td><td>${tanggal}</td><td>${jamTampil}</td></tr>`;
     });
-    h+='</tbody></table><br><h3 style="margin-bottom:10px">Total Kehadiran</h3><table><thead><tr><th>Nama Member</th><th>Frekuensi</th></tr></thead><tbody>';
+    h+='</tbody></table><br><h3 style="margin-bottom:10px">Total Kehadiran</h3><table style="width:100%"><thead><tr><th>Nama Member</th><th>Frekuensi</th></tr></thead><tbody>';
     for(let n in hadir){h+=`<tr><td>${n}</td><td><b>${hadir[n]} kali</b></td></tr>`}
     document.getElementById('rekapTable').innerHTML=h+'</tbody></table>';
 }
