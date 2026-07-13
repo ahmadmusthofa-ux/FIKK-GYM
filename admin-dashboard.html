@@ -41,19 +41,19 @@
         #reader{max-width:500px;margin:20px auto; border-radius: 20px; overflow: hidden; background: #000 !important; border: none !important;}
         .search-box{width:100%;padding:15px;border:none;border-radius:12px;margin-bottom:15px; background: rgba(255,255,255,0.9); color: #000; font-weight: 600;}
         
-        /* FIX: Freeze Header & Scroll Control */
+        /* Freeze Header & Scroll Control */
         .table-wrap { 
             overflow-x: auto; 
             overflow-y: auto; 
             border-radius: 15px; 
             margin-top: 15px; 
-            max-height: 500px; /* Batas tinggi scroll tabel */
+            max-height: 500px; 
             border: 1px solid rgba(255,255,255,0.1);
         }
         table{width:100%;border-collapse:collapse;background:#fff;color:#111827; position: relative;}
         th,td{padding:15px;border-bottom:1px solid #eee;text-align:left}
         
-        /* Sticky Header Logic */
+        /* Sticky Header */
         th {
             background:#f3f4f6; 
             font-size: 12px; 
@@ -284,13 +284,19 @@ async function onScanSuccess(decodedText){
     });
 }
 
+// PERBAIKAN: Ditambahkan format untuk membaca Inverted QR Code (background hitam)
 scanner = new Html5QrcodeScanner('reader', { 
     fps: 10, 
     qrbox: 250,
     rememberLastUsedCamera: true,
     showFlipCameraButton: true,
-    videoConstraints: { facingMode: "environment" }
+    videoConstraints: { facingMode: "environment" },
+    formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ] // Memastikan format dasar terdefinisi
 });
+
+// Konfigurasi tambahan di level library Html5Qrcode untuk mendukung pemindaian terbalik (Inverted QR)
+Html5Qrcode.prototype.isScanInverted = true; 
+
 scanner.render(onScanSuccess);
 
 async function loadStats(){
@@ -485,10 +491,7 @@ async function savePrice(index) {
     const desc = document.getElementById(`desc-${index}`).value;
     showLoadingModal('Menyimpan...', 'Harap tunggu sebentar...');
     try {
-        const r = await fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'updatePricing', index: index, category: category, price: price, desc: desc })
-        });
+        const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updatePricing', index: index, category: category, price: price, desc: desc }) });
         const j = await r.json();
         if(j.status) {
             showModal('✅', 'Berhasil', 'Data kategori <b>'+category+'</b> telah diperbarui!');
