@@ -76,6 +76,22 @@
             animation: pulse-blue 2.5s infinite;
         }
 
+        /* Marquee Animation logic - strictly horizontal */
+        @keyframes marquee {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-50%, 0, 0); }
+        }
+        .marquee-loop {
+            display: flex;
+            width: max-content;
+            animation: marquee 28s linear infinite;
+            white-space: nowrap; /* Mencegah elemen membungkus ke baris baru */
+        }
+        .marquee-loop span {
+            flex-shrink: 0; /* Mencegah penyusutan lebar elemen teks */
+            white-space: nowrap; /* Mengunci teks agar tidak patah ke bawah */
+        }
+
         /* Smooth Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
@@ -109,6 +125,37 @@
         </div>
     </div>
 </nav>
+
+<div class="w-full bg-slate-950/60 border-b border-white/5 py-3 overflow-hidden">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center gap-4">
+        <div class="flex items-center gap-1.5 px-3 py-1 bg-unesaLime text-slate-950 font-black text-[10px] sm:text-xs rounded-lg uppercase tracking-wider flex-shrink-0 z-10 shadow-lg shadow-unesaLime/10 select-none">
+            <span class="w-2 h-2 rounded-full bg-slate-950 animate-ping"></span>
+            Jadwal Latihan
+        </div>
+        <div class="relative w-full overflow-hidden flex items-center select-none text-xs sm:text-sm text-slate-300">
+            <!-- Infinite Marquee Track with absolute horizontal locking -->
+            <div class="marquee-loop gap-8 font-medium">
+                <span class="flex items-center gap-2">
+                    📢 Latihan aktif <strong class="text-unesaLime font-bold">khusus member</strong> dibuka hari <strong class="text-white font-bold">Senin s/d Jumat</strong> mulai pukul <strong class="text-unesaLime font-bold">14:00 WIB s/d 20:00 WIB</strong>.
+                </span>
+                <span class="text-indigo-400">•</span>
+                <span class="flex items-center gap-2">
+                    💪 Mohon membawa perlengkapan pribadi & mematuhi protokol tata tertib area GYM demi kenyamanan bersama.
+                </span>
+                <span class="text-indigo-400">•</span>
+                <!-- Duplicate content to construct the seamless continuous loop -->
+                <span class="flex items-center gap-2">
+                    📢 Latihan aktif <strong class="text-unesaLime font-bold">khusus member</strong> dibuka hari <strong class="text-white font-bold">Senin s/d Jumat</strong> mulai pukul <strong class="text-unesaLime font-bold">14:00 WIB s/d 20:00 WIB</strong>.
+                </span>
+                <span class="text-indigo-400">•</span>
+                <span class="flex items-center gap-2">
+                    💪 Mohon membawa perlengkapan pribadi & mematuhi protokol tata tertib area GYM demi kenyamanan bersama.
+                </span>
+                <span class="text-indigo-400">•</span>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="container max-w-6xl mx-auto px-4 sm:px-6 py-8 flex-grow">
     
@@ -173,11 +220,11 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
                 <h2 class="text-2xl sm:text-3xl font-black text-white">Pilihan Paket Membership</h2>
-                <p class="text-xs sm:text-sm text-slate-400 mt-1 font-light">Pilih paket terbaik dan klik kartu langsung untuk mendaftarkan diri secara instan.</p>
+                <p class="text-xs sm:text-sm text-slate-400 mt-1 font-light">Pilih paket terbaik untuk mendaftarkan diri.</p>
             </div>
         </div>
 
-        <!-- Custom Styled Container for Pricing API Output - Dioptimalkan menjadi 4 kolom (1 baris di desktop) -->
+        <!-- Custom Styled Container for Pricing API Output -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" id="priceList">
             <div class="col-span-full py-16 flex flex-col items-center justify-center text-slate-500 glass-panel rounded-2xl border border-white/5">
                 <svg class="animate-spin h-8 w-8 text-unesaLime mb-4" fill="none" viewBox="0 0 24 24">
