@@ -185,6 +185,8 @@ let scanner;
 let scanLock=false;
 let allMembers=[];
 let pendingMembersList=[]; // Variabel khusus untuk menyimpan data pending approval
+// Menyimpan daftar ID yang dihapus dari tampilan approval di localStorage agar tetap hilang saat refresh
+let hiddenApprovals = JSON.parse(localStorage.getItem('fikk_hidden_approvals') || '[]');
 let barcodeBuffer = "";
 
 function startAutoUpdate() {
@@ -332,8 +334,8 @@ async function loadApprovalList(){
     let r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'membersList'})});
     let j=await r.json();
     
-    // Simpan semua data berstatus Pending ke variabel global
-    pendingMembersList = j.rows.slice(1).filter(row => row[7] == 'Pending');
+    // Simpan semua data berstatus Pending ke variabel global, kecualikan yang sudah dihapus dari tampilan approval
+    pendingMembersList = j.rows.slice(1).filter(row => row[7] == 'Pending' && !hiddenApprovals.includes(String(row[0])));
     
     // Terapkan filter pencarian jika kolom pencarian sedang terisi
     searchApproval();
@@ -388,13 +390,19 @@ function confirmDeleteApproval(id, nama) {
 }
 
 function executeDeleteApproval(id) {
-    // Hanya menghapus item dari daftar antrean tampilan di menu Approval saja
+    // Simpan ID ke localStorage agar tetap hilang dari menu approval meskipun halaman di-refresh
+    if (!hiddenApprovals.includes(String(id))) {
+        hiddenApprovals.push(String(id));
+        localStorage.setItem('fikk_hidden_approvals', JSON.stringify(hiddenApprovals));
+    }
+
+    // Hapus item dari daftar antrean tampilan di menu Approval
     pendingMembersList = pendingMembersList.filter(row => String(row[0]) !== String(id));
     
     // Perbarui tampilan tabel approval sesuai kata kunci pencarian yang aktif
     searchApproval();
     
-    showModal('✅', 'Berhasil', 'Antrean berhasil dihilangkan dari daftar tampilan approval.');
+    showModal('✅', 'Berhasil', 'Antrean berhasil dihapus dari daftar menu approval.');
 }
 // --- AKHIR FITUR APPROVAL ---
 
