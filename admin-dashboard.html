@@ -65,8 +65,11 @@
             box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
         }
         
-        .action-btn{padding:10px 15px;border:none;border-radius:10px;background:#22c55e;color:#fff;font-weight:700;cursor:pointer}
+        .action-btn{padding:10px 15px;border:none;border-radius:10px;background:#22c55e;color:#fff;font-weight:700;cursor:pointer;margin-right:5px}
         .view-btn{padding:10px 15px;border:none;border-radius:10px;background:#3b82f6;color:#fff;font-weight:700;cursor:pointer;margin-right:5px}
+        /* Tambahan Style untuk Tombol Hapus di Approval */
+        .delete-btn{padding:10px 15px;border:none;border-radius:10px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;transition:opacity 0.2s}
+        .delete-btn:hover{opacity:0.85}
         
         .badge-expired{background:#ef4444;color:#fff;padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700}
         .badge-active{background:#22c55e;color:#fff;padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700}
@@ -79,6 +82,9 @@
         .modal-title{font-size:26px;font-weight:800;margin-bottom:14px}
         .modal-text{line-height:1.6;font-size:16px;margin-bottom:22px; color: #4b5563;}
         .modal-ok{background:#4f46e5;color:#fff;border:none;padding:14px 40px;border-radius:14px;font-weight:800;cursor:pointer; width: 100%;}
+        .modal-btn-group{display:flex;gap:10px;width:100%}
+        .modal-cancel{background:#e2e8f0;color:#475569;border:none;padding:14px 20px;border-radius:14px;font-weight:800;cursor:pointer;flex:1}
+        .modal-danger{background:#ef4444;color:#fff;border:none;padding:14px 20px;border-radius:14px;font-weight:800;cursor:pointer;flex:1}
         
         .preview-img-container { background: #f3f4f6; border-radius: 15px; padding: 10px; margin-bottom: 15px; min-height: 200px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; border: 2px dashed #cbd5e1;}
         .preview-img{width:100%; max-height:450px; object-fit:contain; border-radius:10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
@@ -129,7 +135,9 @@
 </div>
 
 <div id="approval" class="panel">
-    <h3>Approval Membership</h3>
+    <h3 style="margin-bottom: 15px;">Approval Membership</h3>
+    <!-- Input Pencarian Khusus Menu Approval -->
+    <input id="approvalSearchInput" class="search-box" placeholder="Cari nama member, ID, atau paket..." onkeyup="searchApproval()">
     <div class="table-wrap" id="membersApprovalList"></div>
 </div>
 
@@ -176,6 +184,7 @@ const API_URL="https://script.google.com/macros/s/AKfycbyeR6fBjAhBhC_U4oVZDYleYc
 let scanner;
 let scanLock=false;
 let allMembers=[];
+let pendingMembersList=[]; // Variabel khusus untuk menyimpan data pending approval
 let barcodeBuffer = "";
 
 function startAutoUpdate() {
@@ -188,7 +197,8 @@ function startAutoUpdate() {
 }
 
 document.addEventListener("keydown", function(e) {
-    if (document.activeElement.id === 'searchInput') return;
+    // Abaikan barcode scanner jika sedang mengetik di kolom pencarian manapun
+    if (document.activeElement.id === 'searchInput' || document.activeElement.id === 'approvalSearchInput') return;
     if (e.key === "Enter") {
         if (barcodeBuffer.length > 0) {
             onScanSuccess(barcodeBuffer.trim());
@@ -314,27 +324,79 @@ async function loadStats(){
     } catch(e) {}
 }
 
+// --- FITUR APPROVAL DENGAN PENCARIAN & HAPUS ---
 async function loadApprovalList(){
+    if (pendingMembersList.length === 0) {
+        document.getElementById('membersApprovalList').innerHTML = '<p style="text-align:center;padding:20px">Memuat data antrean...</p>';
+    }
     let r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'membersList'})});
     let j=await r.json();
-    let h='<table style="width:100%"><thead><tr><th>Nama</th><th>Paket</th><th>Aksi</th></tr></thead><tbody>';
-    let count = 0;
-    for(let i=1;i<j.rows.length;i++){
-        if(j.rows[i][7]=='Pending'){
-            count++;
-            let paket = j.rows[i][6] || '-';
-            h+=`<tr>
-                <td>${j.rows[i][1]}</td>
-                <td>${paket}</td>
-                <td>
-                    <button class='view-btn' onclick="viewEvidence('${j.rows[i][0]}', '${j.rows[i][1]}')">Lihat Bukti</button>
-                    <button class='action-btn' onclick="approve('${j.rows[i][0]}')">Approve</button>
-                </td>
-            </tr>`;
-        }
-    }
-    document.getElementById('membersApprovalList').innerHTML= count > 0 ? h+'</tbody></table>' : '<p style="text-align:center;padding:20px">Tidak ada antrean approval.</p>';
+    
+    // Simpan semua data berstatus Pending ke variabel global
+    pendingMembersList = j.rows.slice(1).filter(row => row[7] == 'Pending');
+    
+    // Terapkan filter pencarian jika kolom pencarian sedang terisi
+    searchApproval();
 }
+
+function renderApprovalTable(data) {
+    if (data.length === 0) {
+        document.getElementById('membersApprovalList').innerHTML = '<p style="text-align:center;padding:20px">Tidak ada antrean approval yang sesuai.</p>';
+        return;
+    }
+    let h='<table style="width:100%"><thead><tr><th>Nama</th><th>Paket</th><th>Aksi</th></tr></thead><tbody>';
+    data.forEach(row => {
+        let id = row[0];
+        let nama = row[1];
+        let paket = row[6] || '-';
+        // Escape tanda kutip pada nama untuk mencegah error onclick
+        let safeNama = String(nama).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        h+=`<tr>
+            <td><b>${nama}</b><br><span style="font-size:11px; color:#64748b;">ID: ${id}</span></td>
+            <td>${paket}</td>
+            <td style="white-space:nowrap;">
+                <button class='view-btn' onclick="viewEvidence('${id}', '${safeNama}')">Lihat Bukti</button>
+                <button class='action-btn' onclick="approve('${id}')">Approve</button>
+                <button class='delete-btn' onclick="confirmDeleteApproval('${id}', '${safeNama}')">Hapus</button>
+            </td>
+        </tr>`;
+    });
+    document.getElementById('membersApprovalList').innerHTML = h + '</tbody></table>';
+}
+
+function searchApproval() {
+    let keyword = (document.getElementById('approvalSearchInput')?.value || '').toLowerCase();
+    let filtered = pendingMembersList.filter(row => {
+        let id = String(row[0] || '').toLowerCase();
+        let nama = String(row[1] || '').toLowerCase();
+        let paket = String(row[6] || '').toLowerCase();
+        return nama.includes(keyword) || id.includes(keyword) || paket.includes(keyword);
+    });
+    renderApprovalTable(filtered);
+}
+
+function confirmDeleteApproval(id, nama) {
+    let htmlConfirm = `
+        Apakah Anda yakin ingin menghilangkan <b>${nama}</b> (ID: ${id}) dari daftar tampilan approval ini?<br>
+        <span style="font-size:13px; color:#64748b;">Data member di database tidak akan terhapus, hanya dihilangkan dari antrean approval sementara.</span>
+        <div class="modal-btn-group" style="margin-top:20px;">
+            <button class="modal-cancel" onclick="closeModal()">Batal</button>
+            <button class="modal-danger" onclick="executeDeleteApproval('${id}')">Ya, Hilangkan</button>
+        </div>
+    `;
+    showModal('🗑️', 'Hilangkan dari Daftar', htmlConfirm, false);
+}
+
+function executeDeleteApproval(id) {
+    // Hanya menghapus item dari daftar antrean tampilan di menu Approval saja
+    pendingMembersList = pendingMembersList.filter(row => String(row[0]) !== String(id));
+    
+    // Perbarui tampilan tabel approval sesuai kata kunci pencarian yang aktif
+    searchApproval();
+    
+    showModal('✅', 'Berhasil', 'Antrean berhasil dihilangkan dari daftar tampilan approval.');
+}
+// --- AKHIR FITUR APPROVAL ---
 
 async function viewEvidence(id, nama) {
     showLoadingModal('Memuat Bukti...', `Mencari data pembayaran untuk <b>${nama}</b>...`);
